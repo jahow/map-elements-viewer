@@ -4,6 +4,7 @@
   "description": "proof of concept for \"mapfold\" (c) engine & components",
   "main": "index.js",
   "scripts": {
+    "start": "webpack-dev-server",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

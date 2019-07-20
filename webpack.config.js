@@ -3,14 +3,14 @@ const path = require("path");
 module.exports = {
   mode: "development",
   entry: {
-    app: path.resolve(__dirname, "src", "app.js")
+    app: path.resolve(__dirname, "test-app", "src", "app.js")
   },
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "[name].js"
   },
   devServer: {
-    contentBase: path.resolve(__dirname, "public")
+    contentBase: path.resolve(__dirname, "test-app", "public")
   },
   devtool: "source-map",
   module: {
