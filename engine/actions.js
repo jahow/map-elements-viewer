@@ -46,11 +46,38 @@ export function setViewZoom(payload) {
   };
 }
 
+const ADD_DATASET = "Add Dataset";
+export function addDataset(payload) {
+  return {
+    payload,
+    type: ADD_DATASET
+  };
+}
+
+const UPDATE_DATASET = "Update Dataset";
+export function updateDataset(payload) {
+  return {
+    payload,
+    type: UPDATE_DATASET
+  };
+}
+
+const REMOVE_DATASET = "Remove Dataset";
+export function removeDataset(payload) {
+  return {
+    payload,
+    type: REMOVE_DATASET
+  };
+}
+
 export const Types = {
   ADD_LAYER,
   UPDATE_LAYER,
   REMOVE_LAYER,
   SET_LAYER_POSITION,
   SET_VIEW_CENTER,
-  SET_VIEW_ZOOM
+  SET_VIEW_ZOOM,
+  ADD_DATASET,
+  UPDATE_DATASET,
+  REMOVE_DATASET
 };

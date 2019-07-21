@@ -2,11 +2,9 @@ import { MapFoldComponent } from "../base";
 
 class LayerTree extends MapFoldComponent {
   connectedCallback() {
-    this.style.width = "100%";
-    this.style.height = "100%";
-    this.style.display = "block";
-
+    this.style.padding = "12px";
     const root = document.createElement("ul");
+    root.style.margin = "0";
     this.appendChild(root);
 
     this.engine.layers$.subscribe(layers => {

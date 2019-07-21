@@ -4,20 +4,23 @@ import ImageLayer from "ol/layer/Image";
 import OSM from "ol/source/OSM";
 import TileLayer from "ol/layer/Tile";
 import ImageWMS from "ol/source/ImageWMS";
+import VectorSource from "ol/source/Vector";
+import { merge } from "rxjs";
+import VectorLayer from "ol/layer/Vector";
+import GeoJSON from "ol/format/GeoJSON";
 
 class OlMap extends MapFoldComponent {
   connectedCallback() {
-    console.log("ol-map created successfully!");
-
-    this.style.width = "100%";
-    this.style.height = "100%";
-    this.style.display = "block";
     this.style.background = "lightgray";
 
     const map = new Map({
       view: new View(),
       target: this
     });
+
+    const vectorSources = {};
+
+    const geojson = new GeoJSON();
 
     const getLayerById = id => {
       const layers = map.getLayers().getArray();
@@ -28,12 +31,21 @@ class OlMap extends MapFoldComponent {
     };
 
     this.engine.layerAdded$.subscribe(layer => {
+      if (layer.datasetId && !vectorSources[layer.datasetId]) {
+        vectorSources[layer.datasetId] = new VectorSource({
+          features: []
+        });
+      }
+
       switch (layer.type) {
         case "osm": {
           map.addLayer(
             new TileLayer({
               source: new OSM(),
-              id: layer.id
+              id: layer.id,
+              opacity: layer.opacity,
+              visible: layer.visible,
+              zIndex: layer._position
             })
           );
           break;
@@ -47,7 +59,22 @@ class OlMap extends MapFoldComponent {
                   LAYERS: layer.resourceName
                 }
               }),
-              id: layer.id
+              id: layer.id,
+              opacity: layer.opacity,
+              visible: layer.visible,
+              zIndex: layer._position
+            })
+          );
+          break;
+        }
+        case "vector": {
+          map.addLayer(
+            new VectorLayer({
+              source: vectorSources[layer.datasetId],
+              id: layer.id,
+              opacity: layer.opacity,
+              visible: layer.visible,
+              zIndex: layer._position
             })
           );
           break;
@@ -60,6 +87,16 @@ class OlMap extends MapFoldComponent {
       if (layer) {
         layer.setVisible(layerInfo.visible);
         layer.setOpacity(layerInfo.opacity);
+
+        if (layerInfo.datasetId && !vectorSources[layerInfo.datasetId]) {
+          vectorSources[layerInfo.datasetId] = new VectorSource({
+            features: []
+          });
+        }
+
+        if (layer instanceof VectorLayer) {
+          layer.setSource(vectorSources[layerInfo.datasetId]);
+        }
       }
     });
 
@@ -83,6 +120,29 @@ class OlMap extends MapFoldComponent {
 
     this.engine.viewCenter$.subscribe(center => {
       map.getView().setCenter(center);
+    });
+
+    merge(this.engine.datasetAdded$, this.engine.datasetUpdated$).subscribe(
+      dataset => {
+        const features = geojson.readFeatures(dataset.features, {
+          dataProjection: "EPSG:4326",
+          featureProjection: map
+            .getView()
+            .getProjection()
+            .getCode()
+        });
+        if (!vectorSources[dataset.id]) {
+          vectorSources[dataset.id] = new VectorSource({
+            features
+          });
+        } else {
+          vectorSources[dataset.id].clear();
+          vectorSources[dataset.id].addFeatures(features);
+        }
+      }
+    );
+    this.engine.datasetRemoved$.subscribe(id => {
+      vectorSources[id] = undefined;
     });
   }
 }

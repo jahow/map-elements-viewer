@@ -2,7 +2,9 @@ import { createStore } from "redux";
 import { Subject } from "rxjs";
 import { main } from "./reducers";
 import {
+  addDataset,
   addLayer,
+  removeDataset,
   removeLayer,
   setLayerPosition,
   setViewCenter,
@@ -26,8 +28,18 @@ export class Facade {
     this.layerMoved$ = new Subject();
     this.layers$ = new Subject();
 
+    this.datasetAdded$ = new Subject();
+    this.datasetRemoved$ = new Subject();
+    this.datasetUpdated$ = new Subject();
+    this.datasets$ = new Subject();
+
     const broadcastLayers = state => {
-      this.layers$.next(state.layerOrder.map(id => state.layers[id]));
+      this.layers$.next(
+        state.layerOrder.map((id, pos) => ({
+          ...state.layers[id],
+          _position: pos
+        }))
+      );
     };
 
     let previousState = this.store.getState();
@@ -43,11 +55,17 @@ export class Facade {
       if (state.layers !== previousState.layers) {
         for (let id in state.layers) {
           if (!previousState.layers[id]) {
-            this.layerAdded$.next(state.layers[id]);
+            this.layerAdded$.next({
+              ...state.layers[id],
+              _position: state.layerOrder.indexOf(id)
+            });
           } else if (
             previousState.layers[id]._version !== state.layers[id]._version
           ) {
-            this.layerUpdated$.next(state.layers[id]);
+            this.layerUpdated$.next({
+              ...state.layers[id],
+              _position: state.layerOrder.indexOf(id)
+            });
           }
         }
         for (let id in previousState.layers) {
@@ -71,6 +89,23 @@ export class Facade {
         }
         broadcastLayers(state);
       }
+      if (state.datasets !== previousState.datasets) {
+        for (let id in state.datasets) {
+          if (!previousState.datasets[id]) {
+            this.datasetAdded$.next(state.datasets[id]);
+          } else if (
+            previousState.datasets[id]._version !== state.datasets[id]._version
+          ) {
+            this.datasetUpdated$.next(state.datasets[id]);
+          }
+        }
+        for (let id in previousState.datasets) {
+          if (!state.datasets[id]) {
+            this.datasetRemoved$.next(previousState.datasets[id]);
+          }
+        }
+        this.datasets$.next(state.datasets);
+      }
 
       previousState = state;
     });
@@ -81,6 +116,7 @@ export class Facade {
       addLayer({
         visible: true,
         opacity: 1,
+        id: Math.floor(Math.random() * 1000000).toString(),
         ...layer
       })
     );
@@ -109,5 +145,13 @@ export class Facade {
 
   setViewCenter(center) {
     this.store.dispatch(setViewCenter(center));
+  }
+
+  addDataset(dataset) {
+    this.store.dispatch(addDataset(dataset));
+  }
+
+  removeDataset(id) {
+    this.store.dispatch(removeDataset(id));
   }
 }
