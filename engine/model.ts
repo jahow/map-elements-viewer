@@ -1,9 +1,17 @@
-export type LayerType = 'wms' | 'wmts' | 'wfs' | 'xyz' | 'dataset'
+export type LayerType = 'wms' | 'wmts' | 'wfs' | 'xyz' | 'local'
 
-export interface LayerPatch {
+export interface Versioned {
+  _version: number
+}
+
+export interface Identified {
   id: string
+}
+
+export interface LayerPatch extends Identified {
   url?: string
   resourceName?: string
+  downloadUrl?: string
   title?: string
   styleId?: string
   datasetId?: string
@@ -11,29 +19,15 @@ export interface LayerPatch {
   visible?: boolean
 }
 
-export interface Layer {
-  id: string
+export type Layer = LayerPatch & {
   type: LayerType
-  url?: string
-  resourceName?: string
-  title: string
-  styleId?: string
-  datasetId?: string
-  opacity: number
-  visible: boolean
 }
 
-export interface Dataset {
-  id: string
+export interface Dataset extends Identified {
   //FIXME: use geojson format
   features: any[]
 }
 
-export interface Style {
-  id: string
+export interface Style extends Identified {
   //FIXME: use geostyler format
-}
-
-export interface Versioned {
-  _version?: number
 }

@@ -1,4 +1,18 @@
-import { Actions, Types as ActionTypes } from './actions'
+import {
+  Actions,
+  ADD_DATASET,
+  ADD_LAYER,
+  ADD_STYLE,
+  REMOVE_DATASET,
+  REMOVE_LAYER,
+  REMOVE_STYLE,
+  SET_LAYER_POSITION,
+  SET_VIEW_CENTER,
+  SET_VIEW_ZOOM,
+  UPDATE_DATASET,
+  UPDATE_LAYER,
+  UPDATE_STYLE,
+} from './actions'
 import { Dataset, Layer, Style, Versioned } from './model'
 
 interface State {
@@ -10,7 +24,7 @@ interface State {
   viewZoom: number
 }
 
-const initialState: State = {
+export const initialState: State = {
   layers: {},
   layerOrder: [],
   datasets: {},
@@ -21,7 +35,7 @@ const initialState: State = {
 
 export function main(state = initialState, action: Actions): State {
   switch (action.type) {
-    case ActionTypes.ADD_LAYER: {
+    case ADD_LAYER: {
       const layerId = action.payload.id
       return {
         ...state,
@@ -29,14 +43,15 @@ export function main(state = initialState, action: Actions): State {
           ...state.layers,
           [layerId]: {
             ...action.payload,
+            _version: 0,
           },
         },
         layerOrder: [...state.layerOrder, layerId],
       }
     }
-    case ActionTypes.UPDATE_LAYER: {
+    case UPDATE_LAYER: {
       const layerId = action.payload.id
-      const _version = (state.layers[layerId]._version || 0) + 1
+      const _version = state.layers[layerId]._version + 1
       return {
         ...state,
         layers: {
@@ -49,7 +64,7 @@ export function main(state = initialState, action: Actions): State {
         },
       }
     }
-    case ActionTypes.REMOVE_LAYER: {
+    case REMOVE_LAYER: {
       const layerId = action.id
       const { [layerId]: removed, ...layers } = state.layers
       return {
@@ -58,7 +73,7 @@ export function main(state = initialState, action: Actions): State {
         layerOrder: state.layerOrder.filter(id => id !== layerId),
       }
     }
-    case ActionTypes.SET_LAYER_POSITION: {
+    case SET_LAYER_POSITION: {
       const layerId = action.payload.id
       const pos = action.payload.position
       const layerOrder = state.layerOrder.filter(id => id !== layerId)
@@ -68,31 +83,34 @@ export function main(state = initialState, action: Actions): State {
         layerOrder,
       }
     }
-    case ActionTypes.SET_VIEW_CENTER: {
+    case SET_VIEW_CENTER: {
       return {
         ...state,
         viewCenter: [action.payload[0], action.payload[1]],
       }
     }
-    case ActionTypes.SET_VIEW_ZOOM: {
+    case SET_VIEW_ZOOM: {
       return {
         ...state,
         viewZoom: action.payload,
       }
     }
-    case ActionTypes.ADD_DATASET: {
+    case ADD_DATASET: {
       const datasetId = action.payload.id
       return {
         ...state,
         datasets: {
           ...state.datasets,
-          [datasetId]: action.payload,
+          [datasetId]: {
+            ...action.payload,
+            _version: 0,
+          },
         },
       }
     }
-    case ActionTypes.UPDATE_DATASET: {
+    case UPDATE_DATASET: {
       const datasetId = action.payload.id
-      const _version = (state.datasets[datasetId]._version || 0) + 1
+      const _version = state.datasets[datasetId]._version + 1
       return {
         ...state,
         datasets: {
@@ -105,7 +123,7 @@ export function main(state = initialState, action: Actions): State {
         },
       }
     }
-    case ActionTypes.REMOVE_DATASET: {
+    case REMOVE_DATASET: {
       const datasetId = action.id
       const { [datasetId]: removed, ...datasets } = state.datasets
       return {
@@ -113,19 +131,22 @@ export function main(state = initialState, action: Actions): State {
         datasets,
       }
     }
-    case ActionTypes.ADD_STYLE: {
+    case ADD_STYLE: {
       const styleId = action.payload.id
       return {
         ...state,
         styles: {
           ...state.styles,
-          [styleId]: action.payload,
+          [styleId]: {
+            ...action.payload,
+            _version: 0,
+          },
         },
       }
     }
-    case ActionTypes.UPDATE_STYLE: {
+    case UPDATE_STYLE: {
       const styleId = action.payload.id
-      const _version = (state.styles[styleId]._version || 0) + 1
+      const _version = state.styles[styleId]._version + 1
       return {
         ...state,
         styles: {
@@ -138,7 +159,7 @@ export function main(state = initialState, action: Actions): State {
         },
       }
     }
-    case ActionTypes.REMOVE_STYLE: {
+    case REMOVE_STYLE: {
       const styleId = action.id
       const { [styleId]: removed, ...styles } = state.styles
       return {
