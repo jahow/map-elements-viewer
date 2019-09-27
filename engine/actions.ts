@@ -1,4 +1,11 @@
-import { Dataset, Layer, LayerPatch, Style } from './model'
+import {
+  Dataset,
+  Layer,
+  LayerCapabilities,
+  LayerDataSchema,
+  LayerPatch,
+  Style,
+} from './model'
 
 export interface Action {
   type: string
@@ -76,6 +83,30 @@ export class RemoveStyle implements Action {
   constructor(public id: string) {}
 }
 
+export const SET_LAYER_CAPABILITIES = 'Set Layer Capabilities'
+export class SetLayerCapabilities implements Action {
+  readonly type = SET_LAYER_CAPABILITIES
+  constructor(
+    public payload: {
+      url: string
+      resourceName: string
+      capabilities: LayerCapabilities
+    }
+  ) {}
+}
+
+export const SET_LAYER_DATA_SCHEMA = 'Set Layer Data Schema'
+export class SetLayerDataSchema implements Action {
+  readonly type = SET_LAYER_DATA_SCHEMA
+  constructor(
+    public payload: {
+      url: string
+      resourceName: string
+      dataSchema: LayerDataSchema
+    }
+  ) {}
+}
+
 export type Actions =
   | AddLayer
   | UpdateLayer
@@ -89,3 +120,5 @@ export type Actions =
   | AddStyle
   | UpdateStyle
   | RemoveStyle
+  | SetLayerCapabilities
+  | SetLayerDataSchema

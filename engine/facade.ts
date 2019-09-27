@@ -1,4 +1,4 @@
-import { createStore } from 'redux'
+import { applyMiddleware, createStore } from 'redux'
 import { Subject } from 'rxjs'
 import { main } from './reducer'
 import {
@@ -15,11 +15,19 @@ import {
 } from './actions'
 import { Dataset, Layer, LayerType, Style } from './model'
 
+import { createEpicMiddleware } from 'redux-observable'
+import { rootEpic } from './epics'
+
+const epicMiddleware = createEpicMiddleware()
+
 export class Facade {
   store = createStore(
     main,
-    (window as any).__REDUX_DEVTOOLS_EXTENSION__ &&
-      (window as any).__REDUX_DEVTOOLS_EXTENSION__()
+    applyMiddleware(
+      (window as any).__REDUX_DEVTOOLS_EXTENSION__ &&
+        (window as any).__REDUX_DEVTOOLS_EXTENSION__(),
+      epicMiddleware
+    )
   )
 
   viewZoom$ = new Subject()
@@ -41,6 +49,8 @@ export class Facade {
   styles$ = new Subject()
 
   constructor() {
+    epicMiddleware.run(rootEpic)
+
     const broadcastLayers = state => {
       this.layers$.next(
         state.layerOrder.map((id, pos) => ({

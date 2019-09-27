@@ -8,6 +8,10 @@ export interface Identified {
   id: string
 }
 
+export interface ErrorProne {
+  _error?: string
+}
+
 export interface LayerPatch extends Identified {
   url?: string
   resourceName?: string
@@ -30,4 +34,31 @@ export interface Dataset extends Identified {
 
 export interface Style extends Identified {
   //FIXME: use geostyler format
+}
+
+export interface LayersCapabilities {
+  [remoteLayerKey: string]: LayerCapabilities
+}
+
+export interface LayerCapabilities extends ErrorProne {
+  legendUrl?: string
+  matrices?: WmtsMatrix[]
+  defaultStyle?: string
+  matrixSet?: string
+}
+
+export interface WmtsMatrix {
+  identifier: string
+  resolution: number
+  origin: [number, number]
+  tileSize?: number
+  timeHeight?: number
+}
+
+export interface LayersDataSchema {
+  [remoteLayerKey: string]: LayerDataSchema
+}
+
+export interface LayerDataSchema extends ErrorProne {
+  // FIXME: use DataSchema from geostyler
 }

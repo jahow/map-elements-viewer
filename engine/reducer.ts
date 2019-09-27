@@ -13,15 +13,24 @@ import {
   UPDATE_LAYER,
   UPDATE_STYLE,
 } from './actions'
-import { Dataset, Layer, Style, Versioned } from './model'
+import {
+  Dataset,
+  Layer,
+  LayersCapabilities,
+  LayersDataSchema,
+  Style,
+  Versioned,
+} from './model'
 
-interface State {
+export interface State {
   layers: { [id: string]: Layer & Versioned }
   layerOrder: string[]
   datasets: { [id: string]: Dataset & Versioned }
   styles: { [id: string]: Style & Versioned }
   viewCenter: [number, number]
   viewZoom: number
+  layersCapabilities: LayersCapabilities
+  layersDataSchema: LayersDataSchema
 }
 
 export const initialState: State = {
@@ -31,6 +40,8 @@ export const initialState: State = {
   styles: {},
   viewCenter: [0, 0],
   viewZoom: 0,
+  layersCapabilities: {},
+  layersDataSchema: {},
 }
 
 export function main(state = initialState, action: Actions): State {

@@ -1,6 +1,6 @@
 import { main as reducer, initialState } from './reducer'
 import * as fromActions from './actions'
-import { sampleDataset, sampleLayer, sampleStyle } from './fixtures'
+import { sampleDataset, sampleLayer1, sampleStyle } from './fixtures'
 
 describe('Main Reducer', () => {
   describe('undefined action', () => {
@@ -44,11 +44,11 @@ describe('Main Reducer', () => {
 
   describe('ADD_LAYER action', () => {
     it('adds a new layer & initializes version', () => {
-      const action = new fromActions.AddLayer(sampleLayer)
+      const action = new fromActions.AddLayer(sampleLayer1)
       const state = reducer(initialState, action)
 
-      expect(state.layers[sampleLayer.id]).toEqual({
-        ...sampleLayer,
+      expect(state.layers[sampleLayer1.id]).toEqual({
+        ...sampleLayer1,
         _version: 0,
       })
     })
@@ -57,38 +57,38 @@ describe('Main Reducer', () => {
   describe('UPDATE_LAYER action', () => {
     it('updates a layer & increases version', () => {
       const action = new fromActions.UpdateLayer({
-        id: sampleLayer.id,
+        id: sampleLayer1.id,
         visible: false,
       })
       const state = reducer(
         {
           ...initialState,
           layers: {
-            [sampleLayer.id]: { ...sampleLayer, _version: 4 },
+            [sampleLayer1.id]: { ...sampleLayer1, _version: 4 },
           },
         },
         action
       )
 
-      expect(state.layers[sampleLayer.id].visible).toEqual(false)
-      expect(state.layers[sampleLayer.id]._version).toEqual(5)
+      expect(state.layers[sampleLayer1.id].visible).toEqual(false)
+      expect(state.layers[sampleLayer1.id]._version).toEqual(5)
     })
   })
 
   describe('REMOVE_LAYER action', () => {
     it('removes a layer', () => {
-      const action = new fromActions.RemoveLayer(sampleLayer.id)
+      const action = new fromActions.RemoveLayer(sampleLayer1.id)
       const state = reducer(
         {
           ...initialState,
           layers: {
-            [sampleLayer.id]: { ...sampleLayer, _version: 8 },
+            [sampleLayer1.id]: { ...sampleLayer1, _version: 8 },
           },
         },
         action
       )
 
-      expect(state.layers[sampleLayer.id]).not.toBeDefined()
+      expect(state.layers[sampleLayer1.id]).not.toBeDefined()
     })
   })
 

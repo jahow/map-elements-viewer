@@ -1,5 +1,5 @@
-import { Facade } from "./facade";
+import { Facade } from './facade'
 
 export default function createEngine() {
-  return new Facade();
+  return new Facade()
 }
