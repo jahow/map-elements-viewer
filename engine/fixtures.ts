@@ -25,3 +25,8 @@ export const sampleLayer3: Layer = {
 export const sampleStyle: Style = {
   id: 'style-000',
 }
+
+export const sampleDataset: Dataset = {
+  id: 'dataset-000',
+  features: [],
+}

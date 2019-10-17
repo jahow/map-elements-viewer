@@ -86,7 +86,6 @@ export const selectAddedLayer = (state$: StateObservable<State>) =>
 
 export const selectUpdatedLayer = (state$: StateObservable<State>) =>
   splitLayers(state$).pipe(
-    tap(console.log),
     mergeMap(({ layers, prevLayers, layerOrder }) =>
       fromArray(
         Object.keys(layers)
