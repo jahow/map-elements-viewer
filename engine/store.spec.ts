@@ -2,6 +2,7 @@ import {
   getStore,
   selectAddedLayer,
   selectOrderedLayers,
+  selectRemovedLayer,
   selectUpdatedLayer,
   selectViewCenter,
   selectViewZoom,
@@ -332,6 +333,80 @@ describe('Store', () => {
         })
 
         expect(calledCount).toBe(2)
+      })
+    })
+
+    describe('selectRemovedLayer', () => {
+      it('emits a value when a layer is removed', () => {
+        let calledCount = 0
+        let emitted = null
+        selectRemovedLayer(state$).subscribe(layer => {
+          calledCount++
+          emitted = layer
+        })
+
+        expect(calledCount).toBe(0)
+
+        const layer1 = {
+          ...sampleLayer1,
+          _version: 2,
+        }
+        const layer2 = {
+          ...sampleLayer2,
+          _version: 4,
+        }
+
+        subject.next({
+          ...initialState,
+          layers: {
+            layer1,
+          },
+          layerOrder: ['layer1'],
+        })
+
+        expect(calledCount).toBe(0)
+
+        subject.next({
+          ...initialState,
+          layers: {
+            layer1,
+            layer2,
+          },
+          layerOrder: ['layer1', 'layer2'],
+        })
+
+        expect(calledCount).toBe(0)
+
+        subject.next({
+          ...initialState,
+          layers: {
+            layer1: { ...layer1, _version: 12 },
+            layer2,
+          },
+          layerOrder: ['layer1', 'layer2'],
+        })
+
+        expect(calledCount).toBe(0)
+
+        subject.next({
+          ...initialState,
+          layers: {
+            layer2,
+          },
+          layerOrder: ['layer2'],
+        })
+
+        expect(calledCount).toBe(1)
+        expect(emitted).toEqual({ ...layer1, _version: 12 })
+
+        subject.next({
+          ...initialState,
+          layers: {},
+          layerOrder: [],
+        })
+
+        expect(calledCount).toBe(2)
+        expect(emitted).toEqual(layer2)
       })
     })
   })

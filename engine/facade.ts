@@ -1,6 +1,3 @@
-import { applyMiddleware, createStore } from 'redux'
-import { Subject } from 'rxjs'
-import { main } from './reducer'
 import {
   AddDataset,
   AddLayer,
@@ -14,143 +11,49 @@ import {
   UpdateLayer,
 } from './actions'
 import { Dataset, Layer, LayerType, Style } from './model'
-
-import { createEpicMiddleware } from 'redux-observable'
-import { rootEpic } from './epics'
-
-const epicMiddleware = createEpicMiddleware()
+import {
+  getStore,
+  getStoreObservable,
+  selectAddedDatasets,
+  selectAddedLayer,
+  selectAddedStyles,
+  selectDatasets,
+  selectMovedLayer,
+  selectOrderedLayers,
+  selectRemovedDatasets,
+  selectRemovedLayer,
+  selectRemovedStyles,
+  selectStyles,
+  selectUpdatedDatasets,
+  selectUpdatedLayer,
+  selectUpdatedStyles,
+  selectViewCenter,
+  selectViewZoom,
+} from './store'
 
 export class Facade {
-  store = createStore(
-    main,
-    applyMiddleware(
-      (window as any).__REDUX_DEVTOOLS_EXTENSION__ &&
-        (window as any).__REDUX_DEVTOOLS_EXTENSION__(),
-      epicMiddleware
-    )
-  )
+  store = getStore()
+  state$ = getStoreObservable(this.store)
 
-  viewZoom$ = new Subject()
-  viewCenter$ = new Subject()
-  layerAdded$ = new Subject()
-  layerRemoved$ = new Subject()
-  layerUpdated$ = new Subject()
-  layerMoved$ = new Subject()
-  layers$ = new Subject()
+  viewZoom$ = selectViewZoom(this.state$)
+  viewCenter$ = selectViewCenter(this.state$)
+  layerAdded$ = selectAddedLayer(this.state$)
+  layerRemoved$ = selectRemovedLayer(this.state$)
+  layerUpdated$ = selectUpdatedLayer(this.state$)
+  layerMoved$ = selectMovedLayer(this.state$)
+  layers$ = selectOrderedLayers(this.state$)
 
-  datasetAdded$ = new Subject()
-  datasetRemoved$ = new Subject()
-  datasetUpdated$ = new Subject()
-  datasets$ = new Subject()
+  datasetAdded$ = selectAddedDatasets(this.state$)
+  datasetRemoved$ = selectRemovedDatasets(this.state$)
+  datasetUpdated$ = selectUpdatedDatasets(this.state$)
+  datasets$ = selectDatasets(this.state$)
 
-  styleAdded$ = new Subject()
-  styleRemoved$ = new Subject()
-  styleUpdated$ = new Subject()
-  styles$ = new Subject()
+  styleAdded$ = selectAddedStyles(this.state$)
+  styleRemoved$ = selectRemovedStyles(this.state$)
+  styleUpdated$ = selectUpdatedStyles(this.state$)
+  styles$ = selectStyles(this.state$)
 
-  constructor() {
-    epicMiddleware.run(rootEpic)
-
-    const broadcastLayers = state => {
-      this.layers$.next(
-        state.layerOrder.map((id, pos) => ({
-          ...state.layers[id],
-          _position: pos,
-        }))
-      )
-    }
-
-    let previousState = this.store.getState()
-    this.store.subscribe(() => {
-      const state = this.store.getState()
-
-      if (state.viewZoom !== previousState.viewZoom) {
-        this.viewZoom$.next(state.viewZoom)
-      }
-      if (state.viewCenter !== previousState.viewCenter) {
-        this.viewCenter$.next(state.viewCenter)
-      }
-
-      // LAYERS
-      if (state.layers !== previousState.layers) {
-        for (let id in state.layers) {
-          if (!previousState.layers[id]) {
-            this.layerAdded$.next({
-              ...state.layers[id],
-              _position: state.layerOrder.indexOf(id),
-            })
-          } else if (
-            previousState.layers[id]._version !== state.layers[id]._version
-          ) {
-            this.layerUpdated$.next({
-              ...state.layers[id],
-              _position: state.layerOrder.indexOf(id),
-            })
-          }
-        }
-        for (let id in previousState.layers) {
-          if (!state.layers[id]) {
-            this.layerRemoved$.next(previousState.layers[id])
-          }
-        }
-        broadcastLayers(state)
-      }
-      if (state.layerOrder !== previousState.layerOrder) {
-        for (let id in state.layers) {
-          const pos = state.layerOrder.indexOf(id)
-          const prevPos = previousState.layerOrder.indexOf(id)
-          if (pos !== prevPos) {
-            this.layerMoved$.next({
-              ...state.layers[id],
-              _position: pos,
-              _previousPosition: prevPos,
-            })
-          }
-        }
-        broadcastLayers(state)
-      }
-
-      // DATASETS
-      if (state.datasets !== previousState.datasets) {
-        for (let id in state.datasets) {
-          if (!previousState.datasets[id]) {
-            this.datasetAdded$.next(state.datasets[id])
-          } else if (
-            previousState.datasets[id]._version !== state.datasets[id]._version
-          ) {
-            this.datasetUpdated$.next(state.datasets[id])
-          }
-        }
-        for (let id in previousState.datasets) {
-          if (!state.datasets[id]) {
-            this.datasetRemoved$.next(previousState.datasets[id])
-          }
-        }
-        this.datasets$.next(state.datasets)
-      }
-
-      // STYLES
-      if (state.styles !== previousState.styles) {
-        for (let id in state.styles) {
-          if (!previousState.styles[id]) {
-            this.styleAdded$.next(state.styles[id])
-          } else if (
-            previousState.styles[id]._version !== state.styles[id]._version
-          ) {
-            this.styleUpdated$.next(state.styles[id])
-          }
-        }
-        for (let id in previousState.styles) {
-          if (!state.styles[id]) {
-            this.styleRemoved$.next(previousState.styles[id])
-          }
-        }
-        this.styles$.next(state.styles)
-      }
-
-      previousState = state
-    })
-  }
+  constructor() {}
 
   addLayer(layer: Layer, type: LayerType) {
     this.store.dispatch(

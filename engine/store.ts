@@ -1,17 +1,16 @@
 import { main, State } from './reducer'
-import { applyMiddleware, compose, createStore } from 'redux'
-import { createEpicMiddleware, StateObservable } from 'redux-observable'
+import { applyMiddleware, compose, createStore, Store } from 'redux'
+import { createEpicMiddleware } from 'redux-observable'
 import {
   distinctUntilChanged,
   map,
   mergeMap,
   pairwise,
-  tap,
   withLatestFrom,
 } from 'rxjs/operators'
-import { rootEpic } from './epics'
-import { of } from 'rxjs'
 import { fromArray } from 'rxjs/internal/observable/fromArray'
+import { Observable } from 'rxjs'
+import { Versioned } from './model'
 
 const epicMiddleware = createEpicMiddleware()
 
@@ -22,23 +21,29 @@ export const getStore = () => {
     main,
     composeEnhancers(applyMiddleware(epicMiddleware))
   )
-  epicMiddleware.run(rootEpic)
+  //epicMiddleware.run(rootEpic)
   return store
 }
 
-export const selectViewCenter = (state$: StateObservable<State>) =>
+export const getStoreObservable = (store: Store) => {
+  return new Observable<State>(subscriber => {
+    store.subscribe(subscriber.next)
+  })
+}
+
+export const selectViewCenter = (state$: Observable<State>) =>
   state$.pipe(
     map(state => state.viewCenter),
     distinctUntilChanged()
   )
 
-export const selectViewZoom = (state$: StateObservable<State>) =>
+export const selectViewZoom = (state$: Observable<State>) =>
   state$.pipe(
     map(state => state.viewZoom),
     distinctUntilChanged()
   )
 
-export const selectOrderedLayers = (state$: StateObservable<State>) =>
+export const selectOrderedLayers = (state$: Observable<State>) =>
   state$.pipe(
     distinctUntilChanged(
       (state, prevState) =>
@@ -52,13 +57,13 @@ export const selectOrderedLayers = (state$: StateObservable<State>) =>
     )
   )
 
-const selectLayerOrder = (state$: StateObservable<State>) =>
+const selectLayerOrder = (state$: Observable<State>) =>
   state$.pipe(
     map(state => state.layerOrder),
-    distinctUntilChanged()
+    distinctUntilChanged<string[]>()
   )
 
-const splitLayers = (state$: StateObservable<State>) =>
+const splitLayers = (state$: Observable<State>) =>
   state$.pipe(
     map(state => state.layers),
     distinctUntilChanged(),
@@ -70,7 +75,7 @@ const splitLayers = (state$: StateObservable<State>) =>
     }))
   )
 
-export const selectAddedLayer = (state$: StateObservable<State>) =>
+export const selectAddedLayer = (state$: Observable<State>) =>
   splitLayers(state$).pipe(
     mergeMap(({ layers, prevLayers, layerOrder }) =>
       fromArray(
@@ -84,7 +89,7 @@ export const selectAddedLayer = (state$: StateObservable<State>) =>
     )
   )
 
-export const selectUpdatedLayer = (state$: StateObservable<State>) =>
+export const selectUpdatedLayer = (state$: Observable<State>) =>
   splitLayers(state$).pipe(
     mergeMap(({ layers, prevLayers, layerOrder }) =>
       fromArray(
@@ -101,24 +106,18 @@ export const selectUpdatedLayer = (state$: StateObservable<State>) =>
     )
   )
 
-export const selectRemovedLayer = (state$: StateObservable<State>) =>
+export const selectRemovedLayer = (state$: Observable<State>) =>
   splitLayers(state$).pipe(
-    mergeMap(({ layers, prevLayers, layerOrder }) =>
+    mergeMap(({ layers, prevLayers, _ }) =>
       fromArray(
-        Object.keys(layers)
-          .filter(
-            id =>
-              prevLayers[id] && prevLayers[id]._version !== layers[id]._version
-          )
-          .map(id => ({
-            ...layers[id],
-            _position: layerOrder.indexOf(id),
-          }))
+        Object.keys(prevLayers)
+          .filter(id => !layers[id])
+          .map(id => prevLayers[id])
       )
     )
   )
 
-export const selectMovedLayer = (state$: StateObservable<State>) =>
+export const selectMovedLayer = (state$: Observable<State>) =>
   selectLayerOrder(state$).pipe(
     pairwise(),
     withLatestFrom(state$, (pair, state) => ({
@@ -139,14 +138,79 @@ export const selectMovedLayer = (state$: StateObservable<State>) =>
     )
   )
 
-export const selectDatasets = (state$: StateObservable<State>) =>
+export function selectAddedObject<T>(
+  dict$: Observable<{ [key: string]: T }>
+): Observable<T> {
+  return dict$.pipe(
+    pairwise(),
+    mergeMap(({ dict, prevDict }) =>
+      fromArray(
+        Object.keys(dict)
+          .filter(id => !prevDict[id])
+          .map(id => dict[id])
+      )
+    )
+  )
+}
+
+export function selectUpdatedObject<T extends Versioned>(
+  dict$: Observable<{ [key: string]: T }>
+): Observable<T> {
+  return dict$.pipe(
+    pairwise(),
+    mergeMap(({ dict, prevDict }) =>
+      fromArray(
+        Object.keys(dict)
+          .filter(
+            id => prevDict[id] && prevDict[id]._version !== dict[id]._version
+          )
+          .map(id => dict[id])
+      )
+    )
+  )
+}
+
+export function selectRemovedObject<T>(
+  dict$: Observable<{ [key: string]: T }>
+): Observable<T> {
+  return dict$.pipe(
+    pairwise(),
+    mergeMap(({ dict, prevDict }) =>
+      fromArray(
+        Object.keys(prevDict)
+          .filter(id => !dict[id])
+          .map(id => prevDict[id])
+      )
+    )
+  )
+}
+
+export const selectDatasets = (state$: Observable<State>) =>
   state$.pipe(
     map(state => state.datasets),
     distinctUntilChanged()
   )
 
-export const selectStyles = (state$: StateObservable<State>) =>
+export const selectAddedDatasets = (state$: Observable<State>) =>
+  selectDatasets(state$).pipe(selectAddedObject)
+
+export const selectUpdatedDatasets = (state$: Observable<State>) =>
+  selectDatasets(state$).pipe(selectUpdatedObject)
+
+export const selectRemovedDatasets = (state$: Observable<State>) =>
+  selectDatasets(state$).pipe(selectRemovedObject)
+
+export const selectStyles = (state$: Observable<State>) =>
   state$.pipe(
     map(state => state.styles),
     distinctUntilChanged()
   )
+
+export const selectAddedStyles = (state$: Observable<State>) =>
+  selectStyles(state$).pipe(selectAddedObject)
+
+export const selectUpdatedStyles = (state$: Observable<State>) =>
+  selectStyles(state$).pipe(selectUpdatedObject)
+
+export const selectRemovedStyles = (state$: Observable<State>) =>
+  selectStyles(state$).pipe(selectRemovedObject)
