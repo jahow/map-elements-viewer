@@ -11,10 +11,12 @@ import {
 import { fromArray } from 'rxjs/internal/observable/fromArray'
 import { Observable } from 'rxjs'
 import { Versioned } from './model'
+import { Actions } from './actions'
 
 const epicMiddleware = createEpicMiddleware()
 
-const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose
+const composeEnhancers =
+  (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose
 
 export const getStore = () => {
   const store = createStore(
@@ -25,7 +27,7 @@ export const getStore = () => {
   return store
 }
 
-export const getStoreObservable = (store: Store) => {
+export const getStoreObservable = (store: Store<State, Actions>) => {
   return new Observable<State>(subscriber => {
     store.subscribe(subscriber.next)
   })
@@ -108,7 +110,7 @@ export const selectUpdatedLayer = (state$: Observable<State>) =>
 
 export const selectRemovedLayer = (state$: Observable<State>) =>
   splitLayers(state$).pipe(
-    mergeMap(({ layers, prevLayers, _ }) =>
+    mergeMap(({ layers, prevLayers }) =>
       fromArray(
         Object.keys(prevLayers)
           .filter(id => !layers[id])
@@ -143,7 +145,7 @@ export function selectAddedObject<T>(
 ): Observable<T> {
   return dict$.pipe(
     pairwise(),
-    mergeMap(({ dict, prevDict }) =>
+    mergeMap(([dict, prevDict]) =>
       fromArray(
         Object.keys(dict)
           .filter(id => !prevDict[id])
@@ -158,7 +160,7 @@ export function selectUpdatedObject<T extends Versioned>(
 ): Observable<T> {
   return dict$.pipe(
     pairwise(),
-    mergeMap(({ dict, prevDict }) =>
+    mergeMap(([dict, prevDict]) =>
       fromArray(
         Object.keys(dict)
           .filter(
@@ -175,7 +177,7 @@ export function selectRemovedObject<T>(
 ): Observable<T> {
   return dict$.pipe(
     pairwise(),
-    mergeMap(({ dict, prevDict }) =>
+    mergeMap(([dict, prevDict]) =>
       fromArray(
         Object.keys(prevDict)
           .filter(id => !dict[id])
