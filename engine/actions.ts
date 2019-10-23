@@ -5,120 +5,180 @@ import {
   LayerDataSchema,
   LayerPatch,
   Style,
+  ViewCenter,
+  ViewZoom,
 } from './model'
 
-export interface Action {
-  type: string
-}
-
 export const ADD_LAYER = 'Add Layer'
-export class AddLayer implements Action {
-  readonly type = ADD_LAYER
-  constructor(public payload: Layer) {}
+export interface AddLayerAction {
+  type: 'Add Layer'
+  payload: Layer
+}
+export function addLayer(payload: Layer): AddLayerAction {
+  return {
+    type: ADD_LAYER,
+    payload,
+  }
 }
 
 export const UPDATE_LAYER = 'Update Layer'
-export class UpdateLayer implements Action {
-  readonly type = UPDATE_LAYER
-  constructor(public payload: LayerPatch) {}
+export interface UpdateLayerAction {
+  type: 'Update Layer'
+  payload: LayerPatch
+}
+export function updateLayer(payload: LayerPatch): UpdateLayerAction {
+  return {
+    type: UPDATE_LAYER,
+    payload,
+  }
 }
 
 export const REMOVE_LAYER = 'Remove Layer'
-export class RemoveLayer implements Action {
-  readonly type = REMOVE_LAYER
-  constructor(public id: string) {}
+export interface RemoveLayerAction {
+  type: 'Remove Layer'
+  id: string
+}
+export function removeLayer(id: string): RemoveLayerAction {
+  return { type: REMOVE_LAYER, id }
 }
 
 export const SET_LAYER_POSITION = 'Set Layer Position'
-export class SetLayerPosition implements Action {
-  readonly type = SET_LAYER_POSITION
-  constructor(public payload: { id: string; position: number }) {}
+export interface SetLayerPositionPayload {
+  id: string
+  position: number
+}
+export interface SetLayerPositionAction {
+  type: 'Set Layer Position'
+  payload: SetLayerPositionPayload
+}
+export function setLayerPosition(
+  payload: SetLayerPositionPayload
+): SetLayerPositionAction {
+  return { type: SET_LAYER_POSITION, payload }
 }
 
 export const SET_VIEW_CENTER = 'Set View Center'
-export class SetViewCenter implements Action {
-  readonly type = SET_VIEW_CENTER
-  constructor(public payload: [number, number]) {}
+export interface SetViewCenterAction {
+  type: 'Set View Center'
+  payload: ViewCenter
+}
+export function setViewCenter(payload: ViewCenter): SetViewCenterAction {
+  return { type: SET_VIEW_CENTER, payload }
 }
 
 export const SET_VIEW_ZOOM = 'Set View Zoom'
-export class SetViewZoom implements Action {
-  readonly type = SET_VIEW_ZOOM
-  constructor(public payload: number) {}
+export interface SetViewZoomAction {
+  type: 'Set View Zoom'
+  payload: ViewZoom
+}
+export function setViewZoom(payload: ViewZoom): SetViewZoomAction {
+  return { type: SET_VIEW_ZOOM, payload }
 }
 
 export const ADD_DATASET = 'Add Dataset'
-export class AddDataset implements Action {
-  readonly type = ADD_DATASET
-  constructor(public payload: Dataset) {}
+export interface AddDatasetAction {
+  type: 'Add Dataset'
+  payload: Dataset
+}
+export function addDataset(payload: Dataset): AddDatasetAction {
+  return { type: ADD_DATASET, payload }
 }
 
 export const UPDATE_DATASET = 'Update Dataset'
-export class UpdateDataset implements Action {
-  readonly type = UPDATE_DATASET
-  constructor(public payload: Dataset) {}
+export interface UpdateDatasetAction {
+  type: 'Update Dataset'
+  payload: Dataset
+}
+export function updateDataset(payload: Dataset): UpdateDatasetAction {
+  return { type: UPDATE_DATASET, payload }
 }
 
 export const REMOVE_DATASET = 'Remove Dataset'
-export class RemoveDataset implements Action {
-  readonly type = REMOVE_DATASET
-  constructor(public id: string) {}
+export interface RemoveDatasetAction {
+  type: 'Remove Dataset'
+  id: string
+}
+export function removeDataset(id: string): RemoveDatasetAction {
+  return { type: REMOVE_DATASET, id }
 }
 
 export const ADD_STYLE = 'Add Style'
-export class AddStyle implements Action {
-  readonly type = ADD_STYLE
-  constructor(public payload: Style) {}
+export interface AddStyleAction {
+  type: 'Add Style'
+  payload: Style
+}
+export function addStyle(payload: Style): AddStyleAction {
+  return { type: ADD_STYLE, payload }
 }
 
 export const UPDATE_STYLE = 'Update Style'
-export class UpdateStyle implements Action {
-  readonly type = UPDATE_STYLE
-  constructor(public payload: Style) {}
+export interface UpdateStyleAction {
+  type: 'Update Style'
+  payload: Style
+}
+export function updateStyle(payload: Style): UpdateStyleAction {
+  return { type: UPDATE_STYLE, payload }
 }
 
 export const REMOVE_STYLE = 'Remove Style'
-export class RemoveStyle implements Action {
-  readonly type = REMOVE_STYLE
-  constructor(public id: string) {}
+export interface RemoveStyleAction {
+  type: 'Remove Style'
+  id: string
+}
+export function removeStyle(id: string): RemoveStyleAction {
+  return { type: REMOVE_STYLE, id }
 }
 
 export const SET_LAYER_CAPABILITIES = 'Set Layer Capabilities'
-export class SetLayerCapabilities implements Action {
-  readonly type = SET_LAYER_CAPABILITIES
-  constructor(
-    public payload: {
-      url: string
-      resourceName: string
-      capabilities: LayerCapabilities
-    }
-  ) {}
+export interface SetLayerCapabilitiesPayload {
+  url: string
+  resourceName: string
+  capabilities: LayerCapabilities
+}
+export interface SetLayerCapabilitiesAction {
+  type: 'Set Layer Capabilities'
+  payload: SetLayerCapabilitiesPayload
+}
+export function setLayerCapabilities(
+  payload: SetLayerCapabilitiesPayload
+): SetLayerCapabilitiesAction {
+  return {
+    type: SET_LAYER_CAPABILITIES,
+    payload,
+  }
 }
 
 export const SET_LAYER_DATA_SCHEMA = 'Set Layer Data Schema'
-export class SetLayerDataSchema implements Action {
-  readonly type = SET_LAYER_DATA_SCHEMA
-  constructor(
-    public payload: {
-      url: string
-      resourceName: string
-      dataSchema: LayerDataSchema
-    }
-  ) {}
+export interface SetLayerDataSchemaPayload {
+  url: string
+  resourceName: string
+  capabilities: LayerDataSchema
+}
+export interface SetLayerDataSchemaAction {
+  type: 'Set Layer Data Schema'
+  payload: SetLayerDataSchemaPayload
+}
+export function setLayerDataSchema(
+  payload: SetLayerDataSchemaPayload
+): SetLayerDataSchemaAction {
+  return {
+    type: SET_LAYER_DATA_SCHEMA,
+    payload,
+  }
 }
 
 export type Actions =
-  | AddLayer
-  | UpdateLayer
-  | RemoveLayer
-  | SetLayerPosition
-  | SetViewCenter
-  | SetViewZoom
-  | AddDataset
-  | UpdateDataset
-  | RemoveDataset
-  | AddStyle
-  | UpdateStyle
-  | RemoveStyle
-  | SetLayerCapabilities
-  | SetLayerDataSchema
+  | AddLayerAction
+  | UpdateLayerAction
+  | RemoveLayerAction
+  | SetLayerPositionAction
+  | SetViewCenterAction
+  | SetViewZoomAction
+  | AddDatasetAction
+  | UpdateDatasetAction
+  | RemoveDatasetAction
+  | AddStyleAction
+  | UpdateStyleAction
+  | RemoveStyleAction
+  | SetLayerCapabilitiesAction
+  | SetLayerDataSchemaAction

@@ -1,5 +1,8 @@
 export type LayerType = 'wms' | 'wmts' | 'wfs' | 'xyz' | 'local'
 
+export type ViewCenter = [number, number]
+export type ViewZoom = number
+
 export interface Versioned {
   _version: number
 }

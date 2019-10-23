@@ -29,7 +29,10 @@ export const getStore = () => {
 
 export const getStoreObservable = (store: Store<State, Actions>) => {
   return new Observable<State>(subscriber => {
-    store.subscribe(subscriber.next)
+    subscriber.next(store.getState())
+    store.subscribe(() => {
+      subscriber.next(store.getState())
+    })
   })
 }
 

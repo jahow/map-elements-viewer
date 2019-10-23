@@ -20,6 +20,8 @@ import {
   LayersDataSchema,
   Style,
   Versioned,
+  ViewCenter,
+  ViewZoom,
 } from './model'
 
 export interface State {
@@ -27,8 +29,8 @@ export interface State {
   layerOrder: string[]
   datasets: { [id: string]: Dataset & Versioned }
   styles: { [id: string]: Style & Versioned }
-  viewCenter: [number, number]
-  viewZoom: number
+  viewCenter: ViewCenter
+  viewZoom: ViewZoom
   layersCapabilities: LayersCapabilities
   layersDataSchema: LayersDataSchema
 }
@@ -80,7 +82,7 @@ export function main(state = initialState, action: Actions): State {
       const { [layerId]: removed, ...layers } = state.layers
       return {
         ...state,
-        layers,
+        layers: layers as { [id: string]: Layer & Versioned },
         layerOrder: state.layerOrder.filter(id => id !== layerId),
       }
     }
@@ -139,7 +141,7 @@ export function main(state = initialState, action: Actions): State {
       const { [datasetId]: removed, ...datasets } = state.datasets
       return {
         ...state,
-        datasets,
+        datasets: datasets as { [id: string]: Dataset & Versioned },
       }
     }
     case ADD_STYLE: {
@@ -175,7 +177,7 @@ export function main(state = initialState, action: Actions): State {
       const { [styleId]: removed, ...styles } = state.styles
       return {
         ...state,
-        styles,
+        styles: styles as { [id: string]: Style & Versioned },
       }
     }
   }

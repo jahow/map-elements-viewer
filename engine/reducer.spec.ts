@@ -14,7 +14,7 @@ describe('Main Reducer', () => {
 
   describe('SET_VIEW_CENTER action', () => {
     it('modifies the view center', () => {
-      const action = new fromActions.SetViewCenter([123, 456])
+      const action = fromActions.setViewCenter([123, 456])
       const state = reducer(
         {
           ...initialState,
@@ -29,7 +29,7 @@ describe('Main Reducer', () => {
 
   describe('SET_VIEW_ZOOM action', () => {
     it('modifies the view zoom', () => {
-      const action = new fromActions.SetViewZoom(5)
+      const action = fromActions.setViewZoom(5)
       const state = reducer(
         {
           ...initialState,
@@ -44,7 +44,7 @@ describe('Main Reducer', () => {
 
   describe('ADD_LAYER action', () => {
     it('adds a new layer & initializes version', () => {
-      const action = new fromActions.AddLayer(sampleLayer1)
+      const action = fromActions.addLayer(sampleLayer1)
       const state = reducer(initialState, action)
 
       expect(state.layers[sampleLayer1.id]).toEqual({
@@ -56,7 +56,7 @@ describe('Main Reducer', () => {
 
   describe('UPDATE_LAYER action', () => {
     it('updates a layer & increases version', () => {
-      const action = new fromActions.UpdateLayer({
+      const action = fromActions.updateLayer({
         id: sampleLayer1.id,
         visible: false,
       })
@@ -77,7 +77,7 @@ describe('Main Reducer', () => {
 
   describe('REMOVE_LAYER action', () => {
     it('removes a layer', () => {
-      const action = new fromActions.RemoveLayer(sampleLayer1.id)
+      const action = fromActions.removeLayer(sampleLayer1.id)
       const state = reducer(
         {
           ...initialState,
@@ -94,7 +94,7 @@ describe('Main Reducer', () => {
 
   describe('SET_LAYER_POSITION action', () => {
     it('moves a layer in the map (back to front)', () => {
-      const action = new fromActions.SetLayerPosition({
+      const action = fromActions.setLayerPosition({
         id: 'abc',
         position: 2,
       })
@@ -109,7 +109,7 @@ describe('Main Reducer', () => {
       expect(state.layerOrder).toEqual(['def', 'ghi', 'abc'])
     })
     it('moves a layer in the map (front to back)', () => {
-      const action = new fromActions.SetLayerPosition({
+      const action = fromActions.setLayerPosition({
         id: 'ghi',
         position: 0,
       })
@@ -127,7 +127,7 @@ describe('Main Reducer', () => {
 
   describe('ADD_DATASET action', () => {
     it('adds a new dataset & initializes version', () => {
-      const action = new fromActions.AddDataset(sampleDataset)
+      const action = fromActions.addDataset(sampleDataset)
       const state = reducer(initialState, action)
 
       expect(state.datasets[sampleDataset.id]).toEqual({
@@ -139,7 +139,7 @@ describe('Main Reducer', () => {
 
   describe('REMOVE_DATASET action', () => {
     it('removes a dataset', () => {
-      const action = new fromActions.RemoveDataset(sampleDataset.id)
+      const action = fromActions.removeDataset(sampleDataset.id)
       const state = reducer(
         {
           ...initialState,
@@ -156,7 +156,7 @@ describe('Main Reducer', () => {
 
   describe('ADD_STYLE action', () => {
     it('adds a new style & initializes version', () => {
-      const action = new fromActions.AddStyle(sampleStyle)
+      const action = fromActions.addStyle(sampleStyle)
       const state = reducer(initialState, action)
 
       expect(state.styles[sampleStyle.id]).toEqual({
@@ -168,7 +168,7 @@ describe('Main Reducer', () => {
 
   describe('REMOVE_STYLE action', () => {
     it('removes a style', () => {
-      const action = new fromActions.RemoveStyle(sampleStyle.id)
+      const action = fromActions.removeStyle(sampleStyle.id)
       const state = reducer(
         {
           ...initialState,

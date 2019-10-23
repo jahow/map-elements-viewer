@@ -1,14 +1,14 @@
 import {
-  AddDataset,
-  AddLayer,
-  AddStyle,
-  RemoveDataset,
-  RemoveLayer,
-  RemoveStyle,
-  SetLayerPosition,
-  SetViewCenter,
-  SetViewZoom,
-  UpdateLayer,
+  addDataset,
+  addLayer,
+  addStyle,
+  removeDataset,
+  removeLayer,
+  removeStyle,
+  setLayerPosition,
+  setViewCenter,
+  setViewZoom,
+  updateLayer,
 } from './actions'
 import { Dataset, Layer, LayerType, Style } from './model'
 import {
@@ -57,7 +57,7 @@ export class Facade {
 
   addLayer(layer: Layer, type: LayerType) {
     this.store.dispatch(
-      new AddLayer({
+      addLayer({
         visible: true,
         opacity: 1,
         type,
@@ -68,7 +68,7 @@ export class Facade {
 
   setLayerVisible(id: string, visible: boolean) {
     this.store.dispatch(
-      new UpdateLayer({
+      updateLayer({
         id,
         visible,
       })
@@ -76,34 +76,34 @@ export class Facade {
   }
 
   removeLayer(id: string) {
-    this.store.dispatch(new RemoveLayer(id))
+    this.store.dispatch(removeLayer(id))
   }
 
   setLayerPosition(id: string, position: number) {
-    this.store.dispatch(new SetLayerPosition({ id, position }))
+    this.store.dispatch(setLayerPosition({ id, position }))
   }
 
   setViewZoom(zoom: number) {
-    this.store.dispatch(new SetViewZoom(zoom))
+    this.store.dispatch(setViewZoom(zoom))
   }
 
   setViewCenter(center: [number, number]) {
-    this.store.dispatch(new SetViewCenter(center))
+    this.store.dispatch(setViewCenter(center))
   }
 
   addDataset(dataset: Dataset) {
-    this.store.dispatch(new AddDataset(dataset))
+    this.store.dispatch(addDataset(dataset))
   }
 
   removeDataset(id: string) {
-    this.store.dispatch(new RemoveDataset(id))
+    this.store.dispatch(removeDataset(id))
   }
 
   addStyle(style: Style) {
-    this.store.dispatch(new AddStyle(style))
+    this.store.dispatch(addStyle(style))
   }
 
   removeStyle(id: string) {
-    this.store.dispatch(new RemoveStyle(id))
+    this.store.dispatch(removeStyle(id))
   }
 }
