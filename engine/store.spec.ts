@@ -1,10 +1,13 @@
 import {
   getStore,
   selectAddedLayer,
+  selectAddedObject,
   selectMovedLayer,
   selectOrderedLayers,
   selectRemovedLayer,
+  selectRemovedObject,
   selectUpdatedLayer,
+  selectUpdatedObject,
   selectViewCenter,
   selectViewZoom,
 } from './store'
@@ -508,6 +511,122 @@ describe('Store', () => {
         })
 
         expect(emitted).toEqual([])
+      })
+    })
+
+    describe('selectAddedObject', () => {
+      it('emits a value when an object is added', () => {
+        const emitted = []
+        const subject = new Subject<{ [index: string]: any }>()
+        selectAddedObject(subject).subscribe(object => emitted.push(object))
+
+        subject.next({})
+        expect(emitted.length).toEqual(0)
+
+        subject.next({
+          abcd: {
+            id: 'abcd',
+          },
+        })
+        expect(emitted.length).toEqual(1)
+        expect(emitted[0].id).toEqual('abcd')
+
+        emitted.length = 0
+        subject.next({
+          abcd: {
+            id: 'abcd',
+          },
+          efgh: {
+            id: 'efgh',
+          },
+          ijkl: {
+            id: 'ijkl',
+          },
+        })
+        expect(emitted.length).toEqual(2)
+        expect(emitted[0].id).toEqual('efgh')
+        expect(emitted[1].id).toEqual('ijkl')
+      })
+    })
+
+    describe('selectUpdatedObject', () => {
+      it('emits a value when an object is updated', () => {
+        const emitted = []
+        const subject = new Subject<{ [index: string]: any }>()
+        selectUpdatedObject(subject).subscribe(object => emitted.push(object))
+
+        subject.next({})
+        expect(emitted.length).toEqual(0)
+
+        subject.next({
+          abcd: {
+            id: 'abcd',
+          },
+        })
+        expect(emitted.length).toEqual(0)
+
+        subject.next({
+          abcd: {
+            id: 'abcd',
+            _version: 3,
+          },
+          efgh: {
+            id: 'efgh',
+          },
+        })
+        expect(emitted.length).toEqual(1)
+        expect(emitted[0].id).toEqual('abcd')
+        expect(emitted[0]._version).toEqual(3)
+
+        emitted.length = 0
+        subject.next({
+          efgh: {
+            id: 'efgh',
+            _version: 2,
+          },
+        })
+        expect(emitted.length).toEqual(1)
+        expect(emitted[0].id).toEqual('efgh')
+        expect(emitted[0]._version).toEqual(2)
+      })
+    })
+
+    describe('selectRemovedObject', () => {
+      it('emits a value when an object is removed', () => {
+        const emitted = []
+        const subject = new Subject<{ [index: string]: any }>()
+        selectRemovedObject(subject).subscribe(object => emitted.push(object))
+
+        subject.next({})
+        expect(emitted.length).toEqual(0)
+
+        subject.next({
+          abcd: {
+            id: 'abcd',
+          },
+          efgh: {
+            id: 'efgh',
+          },
+          ijkl: {
+            id: 'ijkl',
+          },
+        })
+        expect(emitted.length).toEqual(0)
+
+        subject.next({
+          ijkl: {
+            id: 'ijkl',
+            _version: 4,
+          },
+        })
+        expect(emitted.length).toEqual(2)
+        expect(emitted[0].id).toEqual('abcd')
+        expect(emitted[1].id).toEqual('efgh')
+
+        emitted.length = 0
+        subject.next({})
+        expect(emitted.length).toEqual(1)
+        expect(emitted[0].id).toEqual('ijkl')
       })
     })
   })

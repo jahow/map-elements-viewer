@@ -153,7 +153,7 @@ export function selectAddedObject<T>(
 ): Observable<T> {
   return dict$.pipe(
     pairwise(),
-    mergeMap(([dict, prevDict]) =>
+    mergeMap(([prevDict, dict]) =>
       fromArray(
         Object.keys(dict)
           .filter(id => !prevDict[id])
@@ -168,7 +168,7 @@ export function selectUpdatedObject<T extends Versioned>(
 ): Observable<T> {
   return dict$.pipe(
     pairwise(),
-    mergeMap(([dict, prevDict]) =>
+    mergeMap(([prevDict, dict]) =>
       fromArray(
         Object.keys(dict)
           .filter(
@@ -185,7 +185,7 @@ export function selectRemovedObject<T>(
 ): Observable<T> {
   return dict$.pipe(
     pairwise(),
-    mergeMap(([dict, prevDict]) =>
+    mergeMap(([prevDict, dict]) =>
       fromArray(
         Object.keys(prevDict)
           .filter(id => !dict[id])
