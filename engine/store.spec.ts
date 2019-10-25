@@ -1,6 +1,7 @@
 import {
   getStore,
   selectAddedLayer,
+  selectMovedLayer,
   selectOrderedLayers,
   selectRemovedLayer,
   selectUpdatedLayer,
@@ -407,6 +408,106 @@ describe('Store', () => {
 
         expect(calledCount).toBe(2)
         expect(emitted).toEqual(layer2)
+      })
+    })
+
+    describe('selectMovedLayer', () => {
+      it('emits a value when a layer is moved', () => {
+        let emitted = []
+        selectMovedLayer(state$).subscribe(layer => {
+          emitted.push(layer)
+        })
+
+        expect(emitted.length).toBe(0)
+
+        const layer1 = {
+          ...sampleLayer1,
+          _version: 2,
+        }
+        const layer2 = {
+          ...sampleLayer2,
+          _version: 4,
+        }
+        const layer3 = {
+          ...sampleLayer3,
+          _version: 6,
+        }
+
+        subject.next({
+          ...initialState,
+          layers: {
+            layer1,
+            layer2,
+            layer3,
+          },
+          layerOrder: ['layer1', 'layer2', 'layer3'],
+        })
+
+        expect(emitted.length).toBe(0)
+
+        emitted.length = 0
+        subject.next({
+          ...initialState,
+          layers: {
+            layer1,
+            layer2,
+            layer3,
+          },
+          layerOrder: ['layer2', 'layer1', 'layer3'],
+        })
+
+        expect(emitted.length).toBe(2)
+        expect(emitted[0]).toEqual({
+          ...layer1,
+          _position: 1,
+          _previousPosition: 0,
+        })
+        expect(emitted[1]).toEqual({
+          ...layer2,
+          _position: 0,
+          _previousPosition: 1,
+        })
+
+        emitted.length = 0
+        subject.next({
+          ...initialState,
+          layers: {
+            layer1,
+            layer2,
+            layer3,
+          },
+          layerOrder: ['layer3', 'layer2', 'layer1'],
+        })
+
+        expect(emitted.length).toBe(3)
+        expect(emitted[0]).toEqual({
+          ...layer1,
+          _position: 2,
+          _previousPosition: 1,
+        })
+        expect(emitted[1]).toEqual({
+          ...layer2,
+          _position: 1,
+          _previousPosition: 0,
+        })
+        expect(emitted[2]).toEqual({
+          ...layer3,
+          _position: 0,
+          _previousPosition: 2,
+        })
+
+        emitted.length = 0
+        subject.next({
+          ...initialState,
+          layers: {
+            layer1,
+            layer2,
+            layer3,
+          },
+          layerOrder: ['layer3', 'layer2', 'layer1'],
+        })
+
+        expect(emitted).toEqual([])
       })
     })
   })

@@ -126,14 +126,19 @@ export const selectMovedLayer = (state$: Observable<State>) =>
   selectLayerOrder(state$).pipe(
     pairwise(),
     withLatestFrom(state$, (pair, state) => ({
-      layerOrder: pair[0],
-      prevLayerOrder: pair[1],
+      layerOrder: pair[1],
+      prevLayerOrder: pair[0],
       layers: state.layers,
     })),
     mergeMap(({ layerOrder, prevLayerOrder, layers }) =>
       fromArray(
         Object.keys(layers)
-          .filter(id => layerOrder.indexOf(id) !== prevLayerOrder.indexOf(id))
+          .filter(
+            id =>
+              layerOrder.indexOf(id) !== prevLayerOrder.indexOf(id) &&
+              layerOrder.indexOf(id) > -1 &&
+              prevLayerOrder.indexOf(id) > -1
+          )
           .map(id => ({
             ...layers[id],
             _position: layerOrder.indexOf(id),
