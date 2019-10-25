@@ -1,150 +1,150 @@
-import { MapFoldComponent } from "../base";
-import { Map, View } from "ol";
-import ImageLayer from "ol/layer/Image";
-import OSM from "ol/source/OSM";
-import TileLayer from "ol/layer/Tile";
-import ImageWMS from "ol/source/ImageWMS";
-import VectorSource from "ol/source/Vector";
-import { merge } from "rxjs";
-import VectorLayer from "ol/layer/Vector";
-import GeoJSON from "ol/format/GeoJSON";
+import { MapFoldComponent } from '../base'
+import { Map, View } from 'ol'
+import ImageLayer from 'ol/layer/Image'
+import OSM from 'ol/source/OSM'
+import TileLayer from 'ol/layer/Tile'
+import ImageWMS from 'ol/source/ImageWMS'
+import VectorSource from 'ol/source/Vector'
+import { merge } from 'rxjs'
+import VectorLayer from 'ol/layer/Vector'
+import GeoJSON from 'ol/format/GeoJSON'
 
 class OlMap extends MapFoldComponent {
   connectedCallback() {
-    this.style.background = "lightgray";
+    this.style.background = 'lightgray'
 
     const map = new Map({
       view: new View(),
-      target: this
-    });
+      target: this,
+    })
 
-    const vectorSources = {};
+    const vectorSources = {}
 
-    const geojson = new GeoJSON();
+    const geojson = new GeoJSON()
 
     const getLayerById = id => {
-      const layers = map.getLayers().getArray();
+      const layers = map.getLayers().getArray()
       for (let i = 0; i < layers.length; i++) {
-        if (layers[i].get("id") === id) return layers[i];
+        if (layers[i].get('id') === id) return layers[i]
       }
-      return null;
-    };
+      return null
+    }
 
     this.engine.layerAdded$.subscribe(layer => {
       if (layer.datasetId && !vectorSources[layer.datasetId]) {
         vectorSources[layer.datasetId] = new VectorSource({
-          features: []
-        });
+          features: [],
+        })
       }
 
       switch (layer.type) {
-        case "osm": {
+        case 'osm': {
           map.addLayer(
             new TileLayer({
               source: new OSM(),
               id: layer.id,
               opacity: layer.opacity,
               visible: layer.visible,
-              zIndex: layer._position
+              zIndex: layer._position,
             })
-          );
-          break;
+          )
+          break
         }
-        case "wms": {
+        case 'wms': {
           map.addLayer(
             new ImageLayer({
               source: new ImageWMS({
                 url: layer.url,
                 params: {
-                  LAYERS: layer.resourceName
-                }
+                  LAYERS: layer.resourceName,
+                },
               }),
               id: layer.id,
               opacity: layer.opacity,
               visible: layer.visible,
-              zIndex: layer._position
+              zIndex: layer._position,
             })
-          );
-          break;
+          )
+          break
         }
-        case "vector": {
+        case 'vector': {
           map.addLayer(
             new VectorLayer({
               source: vectorSources[layer.datasetId],
               id: layer.id,
               opacity: layer.opacity,
               visible: layer.visible,
-              zIndex: layer._position
+              zIndex: layer._position,
             })
-          );
-          break;
+          )
+          break
         }
       }
-    });
+    })
 
     this.engine.layerUpdated$.subscribe(layerInfo => {
-      const layer = getLayerById(layerInfo.id);
+      const layer = getLayerById(layerInfo.id)
       if (layer) {
-        layer.setVisible(layerInfo.visible);
-        layer.setOpacity(layerInfo.opacity);
+        layer.setVisible(layerInfo.visible)
+        layer.setOpacity(layerInfo.opacity)
 
         if (layerInfo.datasetId && !vectorSources[layerInfo.datasetId]) {
           vectorSources[layerInfo.datasetId] = new VectorSource({
-            features: []
-          });
+            features: [],
+          })
         }
 
         if (layer instanceof VectorLayer) {
-          layer.setSource(vectorSources[layerInfo.datasetId]);
+          layer.setSource(vectorSources[layerInfo.datasetId])
         }
       }
-    });
+    })
 
     this.engine.layerRemoved$.subscribe(({ id }) => {
-      const layer = getLayerById(id);
+      const layer = getLayerById(id)
       if (layer) {
-        map.removeLayer(layer);
+        map.removeLayer(layer)
       }
-    });
+    })
 
     this.engine.layerMoved$.subscribe(({ id, _position }) => {
-      const layer = getLayerById(id);
+      const layer = getLayerById(id)
       if (layer) {
-        layer.setZIndex(_position);
+        layer.setZIndex(_position)
       }
-    });
+    })
 
     this.engine.viewZoom$.subscribe(zoom => {
-      map.getView().setZoom(zoom);
-    });
+      map.getView().setZoom(zoom)
+    })
 
     this.engine.viewCenter$.subscribe(center => {
-      map.getView().setCenter(center);
-    });
+      map.getView().setCenter(center)
+    })
 
     merge(this.engine.datasetAdded$, this.engine.datasetUpdated$).subscribe(
       dataset => {
         const features = geojson.readFeatures(dataset.features, {
-          dataProjection: "EPSG:4326",
+          dataProjection: 'EPSG:4326',
           featureProjection: map
             .getView()
             .getProjection()
-            .getCode()
-        });
+            .getCode(),
+        })
         if (!vectorSources[dataset.id]) {
           vectorSources[dataset.id] = new VectorSource({
-            features
-          });
+            features,
+          })
         } else {
-          vectorSources[dataset.id].clear();
-          vectorSources[dataset.id].addFeatures(features);
+          vectorSources[dataset.id].clear()
+          vectorSources[dataset.id].addFeatures(features)
         }
       }
-    );
+    )
     this.engine.datasetRemoved$.subscribe(id => {
-      vectorSources[id] = undefined;
-    });
+      vectorSources[id] = undefined
+    })
   }
 }
 
-customElements.define("mapfold-openlayers", OlMap);
+customElements.define('mapfold-openlayers', OlMap)
