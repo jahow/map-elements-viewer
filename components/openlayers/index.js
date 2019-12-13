@@ -1,7 +1,6 @@
 import { MapFoldComponent } from '../base'
 import { Map, View } from 'ol'
 import ImageLayer from 'ol/layer/Image'
-import OSM from 'ol/source/OSM'
 import TileLayer from 'ol/layer/Tile'
 import ImageWMS from 'ol/source/ImageWMS'
 import VectorSource from 'ol/source/Vector'
@@ -9,6 +8,7 @@ import { merge } from 'rxjs'
 import VectorLayer from 'ol/layer/Vector'
 import GeoJSON from 'ol/format/GeoJSON'
 import XYZ from 'ol/source/XYZ'
+import { defaults as defaultControls } from 'ol/control'
 
 class OlMap extends MapFoldComponent {
   connectedCallback() {
@@ -17,6 +17,10 @@ class OlMap extends MapFoldComponent {
     const map = new Map({
       view: new View(),
       target: this,
+      controls: defaultControls({
+        zoom: false,
+        rotate: false,
+      }),
     })
 
     // add positron basemap
