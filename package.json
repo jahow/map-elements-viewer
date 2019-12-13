@@ -11,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ol": "^5.3.3",
+    "ol": "^6.1.1",
     "redux": "^4.0.4",
     "redux-observable": "^1.2.0",
     "rxjs": "^6.5.2"
