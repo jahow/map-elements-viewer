@@ -17,24 +17,5 @@ const dropfile = document.createElement('mapfold-dropfile')
 dropfile.init(engine)
 document.body.querySelector('.dropfile-root').appendChild(dropfile)
 
-engine.addLayer({
-  type: 'osm',
-  id: 'base001',
-  title: 'OpenStreetMap',
-})
-engine.addLayer({
-  type: 'wms',
-  id: 'forets',
-  url: 'https://wxs.ign.fr/an7nvfzojv5wa96dsga5nk8w/proxy/',
-  resourceName: 'Forets_Publiques',
-  title: 'Forêts publiques',
-})
-engine.addLayer({
-  type: 'wms',
-  id: 'bateaux',
-  url: 'http://www.ifremer.fr/services/wms/sismer',
-  resourceName: 'CAMPAGNES_BATHY_TRAITEE_GM',
-  title: 'Des bateaux',
-})
-engine.setViewCenter([-124859.29091293899, 6077033.541315858])
-engine.setViewZoom(7.8)
+engine.setViewCenter([-124850, 6077030])
+engine.setViewZoom(6)

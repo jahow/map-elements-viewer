@@ -1,6 +1,7 @@
 <html>
 <head>
   <title>MapFold demo app</title>
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet">
 </head>
 <body>
   <style>
@@ -9,6 +10,8 @@
       width: 100%;
       margin: 0;
       padding: 0;
+      font-family: "Open Sans";
+      font-size: 14px;
     }
     .flex-row {
       display: flex;
@@ -24,17 +27,35 @@
     .flex-shrink {
       flex-shrink: 1;
     }
+    .app-root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+    .map-root {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
     ol-map {
       width: 100%;
     }
+    .layers-container {
+      position: absolute;
+      left: 1.6rem;
+      bottom: 0;
+    }
+    .layertree-root, .dropfile-root {
+      background-color: white;
+      margin-bottom: 1.6rem;
+      box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.11);
+    }
   </style>
-  <div class="flex-col" style="width: 100%; height: 100%">
-    <div class="map-root" style="height: 50%"></div>
-    <div class="flex-row" style="height: 50%">
-      <div class="flex-col" style="width: 50%">
-        <div class="layertree-root flex-grow"></div>
-        <div class="dropfile-root"></div>
-      </div>
+  <div class="app-root">
+    <div class="map-root"></div>
+    <div class="layers-container" class="flex-col">
+      <div class="layertree-root"></div>
+      <div class="dropfile-root"></div>
     </div>
   </div>
   <script src="app.js"></script>

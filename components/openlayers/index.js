@@ -8,6 +8,7 @@ import VectorSource from 'ol/source/Vector'
 import { merge } from 'rxjs'
 import VectorLayer from 'ol/layer/Vector'
 import GeoJSON from 'ol/format/GeoJSON'
+import XYZ from 'ol/source/XYZ'
 
 class OlMap extends MapFoldComponent {
   connectedCallback() {
@@ -17,6 +18,20 @@ class OlMap extends MapFoldComponent {
       view: new View(),
       target: this,
     })
+
+    // add positron basemap
+    map.addLayer(
+      new TileLayer({
+        source: new XYZ({
+          urls: [
+            'http://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+            'http://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+            'http://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+          ],
+          crossOrigin: 'anonymous',
+        }),
+      })
+    )
 
     const vectorSources = {}
 
@@ -38,18 +53,6 @@ class OlMap extends MapFoldComponent {
       }
 
       switch (layer.type) {
-        case 'osm': {
-          map.addLayer(
-            new TileLayer({
-              source: new OSM(),
-              id: layer.id,
-              opacity: layer.opacity,
-              visible: layer.visible,
-              zIndex: layer._position,
-            })
-          )
-          break
-        }
         case 'wms': {
           map.addLayer(
             new ImageLayer({

@@ -11,6 +11,14 @@ class LayerTree extends MapFoldComponent {
       while (root.firstChild) {
         root.removeChild(root.firstChild)
       }
+
+      if (layers.length === 0) {
+        const text = document.createElement('span')
+        text.textContent = 'Aucune couche dans la carte.'
+        text.style.opacity = '0.6'
+        root.appendChild(text)
+      }
+
       layers.reverse().forEach((l, pos) => {
         const el = document.createElement('li')
         const text = document.createElement('span')
