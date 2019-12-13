@@ -1,4 +1,10 @@
-import { main, State } from './reducer'
+import {
+  main,
+  State,
+  StateLayerOrder,
+  StateLayers,
+  StateSources,
+} from './reducer'
 import { applyMiddleware, compose, createStore, Store } from 'redux'
 import { createEpicMiddleware } from 'redux-observable'
 import {
@@ -6,11 +12,12 @@ import {
   map,
   mergeMap,
   pairwise,
+  tap,
   withLatestFrom,
 } from 'rxjs/operators'
 import { fromArray } from 'rxjs/internal/observable/fromArray'
 import { Observable } from 'rxjs'
-import { Versioned } from './model'
+import { Layer, Versioned } from './model'
 import { Actions } from './actions'
 
 const epicMiddleware = createEpicMiddleware()
@@ -46,106 +53,6 @@ export const selectViewZoom = (state$: Observable<State>) =>
   state$.pipe(
     map(state => state.viewZoom),
     distinctUntilChanged()
-  )
-
-export const selectOrderedLayers = (state$: Observable<State>) =>
-  state$.pipe(
-    distinctUntilChanged(
-      (state, prevState) =>
-        state.layers === prevState.layers &&
-        state.layerOrder === prevState.layerOrder
-    ),
-    map(state =>
-      state.layerOrder.map((id, pos) => ({
-        ...state.layers[id],
-      }))
-    )
-  )
-
-const selectLayerOrder = (state$: Observable<State>) =>
-  state$.pipe(
-    map(state => state.layerOrder),
-    distinctUntilChanged<string[]>()
-  )
-
-const splitLayers = (state$: Observable<State>) =>
-  state$.pipe(
-    map(state => state.layers),
-    distinctUntilChanged(),
-    pairwise(),
-    withLatestFrom(selectLayerOrder(state$), (pair, layerOrder) => ({
-      layers: pair[1],
-      prevLayers: pair[0],
-      layerOrder,
-    }))
-  )
-
-export const selectAddedLayer = (state$: Observable<State>) =>
-  splitLayers(state$).pipe(
-    mergeMap(({ layers, prevLayers, layerOrder }) =>
-      fromArray(
-        Object.keys(layers)
-          .filter(id => !prevLayers[id])
-          .map(id => ({
-            ...layers[id],
-            _position: layerOrder.indexOf(id),
-          }))
-      )
-    )
-  )
-
-export const selectUpdatedLayer = (state$: Observable<State>) =>
-  splitLayers(state$).pipe(
-    mergeMap(({ layers, prevLayers, layerOrder }) =>
-      fromArray(
-        Object.keys(layers)
-          .filter(
-            id =>
-              prevLayers[id] && prevLayers[id]._version !== layers[id]._version
-          )
-          .map(id => ({
-            ...layers[id],
-            _position: layerOrder.indexOf(id),
-          }))
-      )
-    )
-  )
-
-export const selectRemovedLayer = (state$: Observable<State>) =>
-  splitLayers(state$).pipe(
-    mergeMap(({ layers, prevLayers }) =>
-      fromArray(
-        Object.keys(prevLayers)
-          .filter(id => !layers[id])
-          .map(id => prevLayers[id])
-      )
-    )
-  )
-
-export const selectMovedLayer = (state$: Observable<State>) =>
-  selectLayerOrder(state$).pipe(
-    pairwise(),
-    withLatestFrom(state$, (pair, state) => ({
-      layerOrder: pair[1],
-      prevLayerOrder: pair[0],
-      layers: state.layers,
-    })),
-    mergeMap(({ layerOrder, prevLayerOrder, layers }) =>
-      fromArray(
-        Object.keys(layers)
-          .filter(
-            id =>
-              layerOrder.indexOf(id) !== prevLayerOrder.indexOf(id) &&
-              layerOrder.indexOf(id) > -1 &&
-              prevLayerOrder.indexOf(id) > -1
-          )
-          .map(id => ({
-            ...layers[id],
-            _position: layerOrder.indexOf(id),
-            _previousPosition: prevLayerOrder.indexOf(id),
-          }))
-      )
-    )
   )
 
 export function selectAddedObject<T>(
@@ -230,3 +137,126 @@ export const selectUpdatedStyles = (state$: Observable<State>) =>
 
 export const selectRemovedStyles = (state$: Observable<State>) =>
   selectStyles(state$).pipe(selectRemovedObject)
+
+const selectLayers = (state$: Observable<State>) =>
+  state$.pipe(
+    map(state => state.layers),
+    distinctUntilChanged<StateLayers>(),
+    withLatestFrom(
+      selectSources(state$),
+      (layers: StateLayers, sources: StateSources) =>
+        Object.keys(layers).reduce((prev, layerId) => {
+          const layer: Layer = layers[layerId]
+          return {
+            ...prev,
+            [layerId]:
+              layer.sourceId && sources[layer.sourceId]
+                ? {
+                    ...layer,
+                    source: sources[layer.sourceId],
+                  }
+                : layer,
+          }
+        }, {})
+    )
+  )
+
+const selectLayerOrder = (state$: Observable<State>) =>
+  state$.pipe(
+    map(state => state.layerOrder),
+    distinctUntilChanged<StateLayerOrder>()
+  )
+
+export const selectOrderedLayers = (state$: Observable<State>) =>
+  selectLayers(state$).pipe(
+    withLatestFrom(selectLayerOrder(state$)),
+    map<[StateLayers, StateLayerOrder], Layer[]>(([layers, layerOrder]) =>
+      layerOrder.map((id, pos) => ({
+        ...layers[id],
+      }))
+    )
+  )
+
+const splitLayers = (
+  state$: Observable<State>
+): Observable<{
+  layers: StateLayers
+  prevLayers: StateLayers
+  layerOrder: StateLayerOrder
+}> =>
+  selectLayers(state$).pipe(
+    pairwise(),
+    withLatestFrom(selectLayerOrder(state$), (pair, layerOrder) => ({
+      layers: pair[1],
+      prevLayers: pair[0],
+      layerOrder,
+    }))
+  )
+
+export const selectAddedLayer = (state$: Observable<State>) =>
+  splitLayers(state$).pipe(
+    mergeMap(({ layers, prevLayers, layerOrder }) =>
+      fromArray(
+        Object.keys(layers)
+          .filter(id => !prevLayers[id])
+          .map(id => ({
+            ...layers[id],
+            _position: layerOrder.indexOf(id),
+          }))
+      )
+    )
+  )
+
+export const selectUpdatedLayer = (state$: Observable<State>) =>
+  splitLayers(state$).pipe(
+    mergeMap(({ layers, prevLayers, layerOrder }) =>
+      fromArray(
+        Object.keys(layers)
+          .filter(
+            id =>
+              prevLayers[id] && prevLayers[id]._version !== layers[id]._version
+          )
+          .map(id => ({
+            ...layers[id],
+            _position: layerOrder.indexOf(id),
+          }))
+      )
+    )
+  )
+
+export const selectRemovedLayer = (state$: Observable<State>) =>
+  splitLayers(state$).pipe(
+    mergeMap(({ layers, prevLayers }) =>
+      fromArray(
+        Object.keys(prevLayers)
+          .filter(id => !layers[id])
+          .map(id => prevLayers[id])
+      )
+    )
+  )
+
+export const selectMovedLayer = (state$: Observable<State>) =>
+  selectLayerOrder(state$).pipe(
+    pairwise(),
+    withLatestFrom(state$, (pair, state) => ({
+      layerOrder: pair[1],
+      prevLayerOrder: pair[0],
+      layers: state.layers,
+    })),
+    mergeMap(({ layerOrder, prevLayerOrder, layers }) =>
+      fromArray(
+        Object.keys(layers)
+          .filter(
+            id =>
+              layerOrder.indexOf(id) !== prevLayerOrder.indexOf(id) &&
+              layerOrder.indexOf(id) > -1 &&
+              prevLayerOrder.indexOf(id) > -1
+          )
+          .map(id => ({
+            ...layers[id],
+            _position: layerOrder.indexOf(id),
+            _previousPosition: prevLayerOrder.indexOf(id),
+          }))
+      )
+    )
+  )

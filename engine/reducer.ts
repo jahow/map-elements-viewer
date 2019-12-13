@@ -24,12 +24,18 @@ import {
   ViewZoom,
 } from './model'
 
+export type StateLayers = { [id: string]: Layer & Versioned }
+export type StateSources = { [id: string]: Source & Versioned }
+export type StateSourcesMetadata = { [id: string]: SourceMetadata }
+export type StateStyles = { [id: string]: Style & Versioned }
+export type StateLayerOrder = string[]
+
 export interface State {
-  layers: { [id: string]: Layer & Versioned }
-  layerOrder: string[]
-  sources: { [id: string]: Source & Versioned }
-  sourcesMetadata: { [id: string]: SourceMetadata }
-  styles: { [id: string]: Style & Versioned }
+  layers: StateLayers
+  layerOrder: StateLayerOrder
+  sources: StateSources
+  sourcesMetadata: StateSourcesMetadata
+  styles: StateStyles
   viewCenter: ViewCenter
   viewZoom: ViewZoom
 }

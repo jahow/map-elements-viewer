@@ -41,15 +41,15 @@ class DropFile extends MapFoldComponent {
             return
           }
         }
-        this.engine.addDataset({
+        this.engine.addSource({
           id: file.name,
+          type: 'local',
           features,
         })
         this.engine.addLayer({
-          id: Math.floor(Math.random() * 10000).toString(), // this is not ideal... we should at least prevent adding a number as id
-          type: 'vector',
+          id: Math.floor(Math.random() * 1000000).toString(), // this is not ideal... we should at least prevent adding a number as id
           title: fileNameParts.slice(0, fileNameParts.length - 1).join('.'),
-          datasetId: file.name,
+          sourceId: file.name,
         })
       }
       reader.readAsText(file)

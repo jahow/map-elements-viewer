@@ -5,6 +5,7 @@ import TileLayer from 'ol/layer/Tile'
 import ImageWMS from 'ol/source/ImageWMS'
 import VectorSource from 'ol/source/Vector'
 import { merge } from 'rxjs'
+import { filter } from 'rxjs/operators'
 import VectorLayer from 'ol/layer/Vector'
 import GeoJSON from 'ol/format/GeoJSON'
 import XYZ from 'ol/source/XYZ'
@@ -50,20 +51,27 @@ class OlMap extends MapFoldComponent {
     }
 
     this.engine.layerAdded$.subscribe(layer => {
-      if (layer.datasetId && !vectorSources[layer.datasetId]) {
-        vectorSources[layer.datasetId] = new VectorSource({
+      if (!layer.source) {
+        return
+      }
+
+      const sourceType = layer.source.type
+      const sourceId = layer.source.id
+
+      if (sourceType === 'local' && !vectorSources[sourceId]) {
+        vectorSources[sourceId] = new VectorSource({
           features: [],
         })
       }
 
-      switch (layer.type) {
+      switch (sourceType) {
         case 'wms': {
           map.addLayer(
             new ImageLayer({
               source: new ImageWMS({
-                url: layer.url,
+                url: source.url,
                 params: {
-                  LAYERS: layer.resourceName,
+                  LAYERS: source.resourceName,
                 },
               }),
               id: layer.id,
@@ -74,10 +82,10 @@ class OlMap extends MapFoldComponent {
           )
           break
         }
-        case 'vector': {
+        case 'local': {
           map.addLayer(
             new VectorLayer({
-              source: vectorSources[layer.datasetId],
+              source: vectorSources[sourceId],
               id: layer.id,
               opacity: layer.opacity,
               visible: layer.visible,
@@ -95,14 +103,17 @@ class OlMap extends MapFoldComponent {
         layer.setVisible(layerInfo.visible)
         layer.setOpacity(layerInfo.opacity)
 
-        if (layerInfo.datasetId && !vectorSources[layerInfo.datasetId]) {
-          vectorSources[layerInfo.datasetId] = new VectorSource({
+        const sourceType = layer.source.type
+        const sourceId = layer.source.id
+
+        if (sourceType === 'local' && !vectorSources[sourceId]) {
+          vectorSources[sourceId] = new VectorSource({
             features: [],
           })
         }
 
         if (layer instanceof VectorLayer) {
-          layer.setSource(vectorSources[layerInfo.datasetId])
+          layer.setSource(vectorSources[sourceId])
         }
       }
     })
@@ -129,26 +140,28 @@ class OlMap extends MapFoldComponent {
       map.getView().setCenter(center)
     })
 
-    merge(this.engine.datasetAdded$, this.engine.datasetUpdated$).subscribe(
-      dataset => {
-        const features = geojson.readFeatures(dataset.features, {
+    merge(this.engine.sourceAdded$, this.engine.sourceUpdated$)
+      .pipe(filter(source => source.type === 'local'))
+      .subscribe(source => {
+        const features = geojson.readFeatures(source.features, {
           dataProjection: 'EPSG:4326',
           featureProjection: map
             .getView()
             .getProjection()
             .getCode(),
         })
-        if (!vectorSources[dataset.id]) {
-          vectorSources[dataset.id] = new VectorSource({
+        if (!vectorSources[source.id]) {
+          vectorSources[source.id] = new VectorSource({
             features,
           })
         } else {
-          vectorSources[dataset.id].clear()
-          vectorSources[dataset.id].addFeatures(features)
+          vectorSources[source.id].clear()
+          vectorSources[source.id].addFeatures(features)
         }
-      }
-    )
-    this.engine.datasetRemoved$.subscribe(id => {
+      })
+
+    this.engine.sourceRemoved$.subscribe(id => {
+      vectorSources[id].clear()
       vectorSources[id] = undefined
     })
   }

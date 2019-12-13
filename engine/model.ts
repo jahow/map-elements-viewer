@@ -23,6 +23,11 @@ export interface Layer extends Identified {
   visible?: boolean
 }
 
+export interface LayerFull extends Layer {
+  source?: Source
+  _position: number
+}
+
 export interface Style extends Identified {
   //FIXME: use geostyler format
 }

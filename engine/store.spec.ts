@@ -14,7 +14,13 @@ import {
 import { BehaviorSubject, Subject } from 'rxjs'
 import { StateObservable } from 'redux-observable'
 import { initialState, State } from './reducer'
-import { sampleLayer1, sampleLayer2, sampleLayer3 } from './fixtures'
+import {
+  sampleLayer1,
+  sampleLayer2,
+  sampleLayer3,
+  sampleSource,
+} from './fixtures'
+import { LocalSource, Source } from './model'
 
 describe('Store', () => {
   describe('getStore', () => {
@@ -172,6 +178,41 @@ describe('Store', () => {
 
         expect(calledCount).toBe(3)
         expect(emitted).toEqual([layer2, layer1])
+      })
+
+      it('emits layers with their source if they have any', () => {
+        let emitted = null
+        selectOrderedLayers(state$).subscribe(layers => {
+          emitted = layers
+        })
+
+        const layer1 = {
+          ...sampleLayer1,
+          _version: 2,
+          sourceId: sampleSource.id,
+        }
+        const source = {
+          ...(sampleSource as LocalSource),
+          _version: 0,
+        }
+
+        subject.next({
+          ...initialState,
+          layers: {
+            layer1,
+          },
+          layerOrder: ['layer1'],
+          sources: {
+            [source.id]: source,
+          },
+        })
+
+        expect(emitted).toEqual([
+          {
+            ...layer1,
+            source,
+          },
+        ])
       })
     })
 
