@@ -195,20 +195,26 @@ export function selectRemovedObject<T>(
   )
 }
 
-export const selectDatasets = (state$: Observable<State>) =>
+export const selectSources = (state$: Observable<State>) =>
   state$.pipe(
-    map(state => state.datasets),
+    map(state => state.sources),
     distinctUntilChanged()
   )
 
-export const selectAddedDatasets = (state$: Observable<State>) =>
-  selectDatasets(state$).pipe(selectAddedObject)
+export const selectAddedSources = (state$: Observable<State>) =>
+  selectSources(state$).pipe(selectAddedObject)
 
-export const selectUpdatedDatasets = (state$: Observable<State>) =>
-  selectDatasets(state$).pipe(selectUpdatedObject)
+export const selectUpdatedSources = (state$: Observable<State>) =>
+  selectSources(state$).pipe(selectUpdatedObject)
 
-export const selectRemovedDatasets = (state$: Observable<State>) =>
-  selectDatasets(state$).pipe(selectRemovedObject)
+export const selectRemovedSources = (state$: Observable<State>) =>
+  selectSources(state$).pipe(selectRemovedObject)
+
+export const selectSourcesMetadata = (state$: Observable<State>) =>
+  state$.pipe(
+    map(state => state.sourcesMetadata),
+    distinctUntilChanged()
+  )
 
 export const selectStyles = (state$: Observable<State>) =>
   state$.pipe(

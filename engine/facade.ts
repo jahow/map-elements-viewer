@@ -1,35 +1,37 @@
 import {
-  addDataset,
   addLayer,
+  addSource,
   addStyle,
-  removeDataset,
   removeLayer,
+  removeSource,
   removeStyle,
   setLayerPosition,
   setViewCenter,
   setViewZoom,
   updateLayer,
 } from './actions'
-import { Dataset, Layer, LayerType, Style } from './model'
+import { Layer, Source, Style } from './model'
 import {
   getStore,
   getStoreObservable,
-  selectAddedDatasets,
   selectAddedLayer,
+  selectAddedSources,
   selectAddedStyles,
-  selectDatasets,
   selectMovedLayer,
   selectOrderedLayers,
-  selectRemovedDatasets,
   selectRemovedLayer,
+  selectRemovedSources,
   selectRemovedStyles,
+  selectSources,
+  selectSourcesMetadata,
   selectStyles,
-  selectUpdatedDatasets,
   selectUpdatedLayer,
+  selectUpdatedSources,
   selectUpdatedStyles,
   selectViewCenter,
   selectViewZoom,
 } from './store'
+import { distinctUntilChanged, filter } from 'rxjs/operators'
 
 export class Facade {
   store = getStore()
@@ -43,10 +45,11 @@ export class Facade {
   layerMoved$ = selectMovedLayer(this.state$)
   layers$ = selectOrderedLayers(this.state$)
 
-  datasetAdded$ = selectAddedDatasets(this.state$)
-  datasetRemoved$ = selectRemovedDatasets(this.state$)
-  datasetUpdated$ = selectUpdatedDatasets(this.state$)
-  datasets$ = selectDatasets(this.state$)
+  sourceAdded$ = selectAddedSources(this.state$)
+  sourceRemoved$ = selectRemovedSources(this.state$)
+  sourceUpdated$ = selectUpdatedSources(this.state$)
+  sources$ = selectSources(this.state$)
+  sourcesMetadata$ = selectSourcesMetadata(this.state$)
 
   styleAdded$ = selectAddedStyles(this.state$)
   styleRemoved$ = selectRemovedStyles(this.state$)
@@ -55,12 +58,11 @@ export class Facade {
 
   constructor() {}
 
-  addLayer(layer: Layer, type: LayerType) {
+  addLayer(layer: Layer) {
     this.store.dispatch(
       addLayer({
         visible: true,
         opacity: 1,
-        type,
         ...layer,
       })
     )
@@ -91,12 +93,19 @@ export class Facade {
     this.store.dispatch(setViewCenter(center))
   }
 
-  addDataset(dataset: Dataset) {
-    this.store.dispatch(addDataset(dataset))
+  addSource(source: Source) {
+    this.store.dispatch(addSource(source))
   }
 
-  removeDataset(id: string) {
-    this.store.dispatch(removeDataset(id))
+  removeSource(id: string) {
+    this.store.dispatch(removeSource(id))
+  }
+
+  getSourceMetadata(sourceId: string) {
+    this.sourcesMetadata$.pipe(
+      filter(sourcesMetadata => !!sourcesMetadata[sourceId]),
+      distinctUntilChanged()
+    )
   }
 
   addStyle(style: Style) {

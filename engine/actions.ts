@@ -1,9 +1,7 @@
 import {
-  Dataset,
   Layer,
-  LayerCapabilities,
-  LayerDataSchema,
-  LayerPatch,
+  Source,
+  SourceMetadata,
   Style,
   ViewCenter,
   ViewZoom,
@@ -24,9 +22,9 @@ export function addLayer(payload: Layer): AddLayerAction {
 export const UPDATE_LAYER = 'Update Layer'
 export interface UpdateLayerAction {
   type: 'Update Layer'
-  payload: LayerPatch
+  payload: Layer
 }
-export function updateLayer(payload: LayerPatch): UpdateLayerAction {
+export function updateLayer(payload: Layer): UpdateLayerAction {
   return {
     type: UPDATE_LAYER,
     payload,
@@ -75,31 +73,31 @@ export function setViewZoom(payload: ViewZoom): SetViewZoomAction {
   return { type: SET_VIEW_ZOOM, payload }
 }
 
-export const ADD_DATASET = 'Add Dataset'
-export interface AddDatasetAction {
-  type: 'Add Dataset'
-  payload: Dataset
+export const ADD_SOURCE = 'Add Source'
+export interface AddSourceAction {
+  type: 'Add Source'
+  payload: Source
 }
-export function addDataset(payload: Dataset): AddDatasetAction {
-  return { type: ADD_DATASET, payload }
-}
-
-export const UPDATE_DATASET = 'Update Dataset'
-export interface UpdateDatasetAction {
-  type: 'Update Dataset'
-  payload: Dataset
-}
-export function updateDataset(payload: Dataset): UpdateDatasetAction {
-  return { type: UPDATE_DATASET, payload }
+export function addSource(payload: Source): AddSourceAction {
+  return { type: ADD_SOURCE, payload }
 }
 
-export const REMOVE_DATASET = 'Remove Dataset'
-export interface RemoveDatasetAction {
-  type: 'Remove Dataset'
+export const UPDATE_SOURCE = 'Update Source'
+export interface UpdateSourceAction {
+  type: 'Update Source'
+  payload: Source
+}
+export function updateSource(payload: Source): UpdateSourceAction {
+  return { type: UPDATE_SOURCE, payload }
+}
+
+export const REMOVE_SOURCE = 'Remove Source'
+export interface RemoveSourceAction {
+  type: 'Remove Source'
   id: string
 }
-export function removeDataset(id: string): RemoveDatasetAction {
-  return { type: REMOVE_DATASET, id }
+export function removeSource(id: string): RemoveSourceAction {
+  return { type: REMOVE_SOURCE, id }
 }
 
 export const ADD_STYLE = 'Add Style'
@@ -129,40 +127,16 @@ export function removeStyle(id: string): RemoveStyleAction {
   return { type: REMOVE_STYLE, id }
 }
 
-export const SET_LAYER_CAPABILITIES = 'Set Layer Capabilities'
-export interface SetLayerCapabilitiesPayload {
-  url: string
-  resourceName: string
-  capabilities: LayerCapabilities
+export const SET_SOURCE_METADATA = 'Set SourceMetadata'
+export interface SetSourceMetadataAction {
+  type: 'Set SourceMetadata'
+  payload: SourceMetadata
 }
-export interface SetLayerCapabilitiesAction {
-  type: 'Set Layer Capabilities'
-  payload: SetLayerCapabilitiesPayload
-}
-export function setLayerCapabilities(
-  payload: SetLayerCapabilitiesPayload
-): SetLayerCapabilitiesAction {
+export function setSourceMetadata(
+  payload: SourceMetadata
+): SetSourceMetadataAction {
   return {
-    type: SET_LAYER_CAPABILITIES,
-    payload,
-  }
-}
-
-export const SET_LAYER_DATA_SCHEMA = 'Set Layer Data Schema'
-export interface SetLayerDataSchemaPayload {
-  url: string
-  resourceName: string
-  capabilities: LayerDataSchema
-}
-export interface SetLayerDataSchemaAction {
-  type: 'Set Layer Data Schema'
-  payload: SetLayerDataSchemaPayload
-}
-export function setLayerDataSchema(
-  payload: SetLayerDataSchemaPayload
-): SetLayerDataSchemaAction {
-  return {
-    type: SET_LAYER_DATA_SCHEMA,
+    type: SET_SOURCE_METADATA,
     payload,
   }
 }
@@ -174,11 +148,10 @@ export type Actions =
   | SetLayerPositionAction
   | SetViewCenterAction
   | SetViewZoomAction
-  | AddDatasetAction
-  | UpdateDatasetAction
-  | RemoveDatasetAction
+  | AddSourceAction
+  | UpdateSourceAction
+  | RemoveSourceAction
   | AddStyleAction
   | UpdateStyleAction
   | RemoveStyleAction
-  | SetLayerCapabilitiesAction
-  | SetLayerDataSchemaAction
+  | SetSourceMetadataAction

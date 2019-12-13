@@ -1,4 +1,4 @@
-export type LayerType = 'wms' | 'wmts' | 'wfs' | 'xyz' | 'local'
+import { Feature } from 'geojson'
 
 export type ViewCenter = [number, number]
 export type ViewZoom = number
@@ -15,53 +15,45 @@ export interface ErrorProne {
   _error?: string
 }
 
-export interface LayerPatch extends Identified {
-  url?: string
-  resourceName?: string
-  downloadUrl?: string
+export interface Layer extends Identified {
   title?: string
   styleId?: string
-  datasetId?: string
+  sourceId?: string
   opacity?: number
   visible?: boolean
-}
-
-export type Layer = LayerPatch & {
-  type: LayerType
-}
-
-export interface Dataset extends Identified {
-  //FIXME: use geojson format
-  features: any[]
 }
 
 export interface Style extends Identified {
   //FIXME: use geostyler format
 }
 
-export interface LayersCapabilities {
-  [remoteLayerKey: string]: LayerCapabilities
+export interface LocalSource extends Identified {
+  type: 'local'
+  features: Feature[]
 }
 
-export interface LayerCapabilities extends ErrorProne {
-  legendUrl?: string
-  matrices?: WmtsMatrix[]
-  defaultStyle?: string
-  matrixSet?: string
+export interface OgcSource extends Identified {
+  type: 'wms' | 'wfs' | 'wmts'
+  url: string
+  resourceName: string
 }
 
-export interface WmtsMatrix {
-  identifier: string
-  resolution: number
-  origin: [number, number]
-  tileSize?: number
-  timeHeight?: number
+export interface XyzSource extends Identified {
+  type: 'xyz'
+  url: string
 }
 
-export interface LayersDataSchema {
-  [remoteLayerKey: string]: LayerDataSchema
+export interface ElasticSource extends Identified {
+  type: 'elastic'
+  url: string
+  mustParams: Object[]
 }
 
-export interface LayerDataSchema extends ErrorProne {
-  // FIXME: use DataSchema from geostyler
+export type Source = LocalSource | OgcSource | XyzSource | ElasticSource
+
+export interface SourceMetadata extends ErrorProne {
+  sourceId: string
+  loading?: boolean
+  hasPointsOnly?: boolean
+  extent?: [number, number, number, number]
 }

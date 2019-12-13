@@ -1,6 +1,7 @@
-import { main as reducer, initialState } from './reducer'
+import { initialState, main as reducer } from './reducer'
 import * as fromActions from './actions'
-import { sampleDataset, sampleLayer1, sampleStyle } from './fixtures'
+import { sampleLayer1, sampleSource, sampleStyle } from './fixtures'
+import { LocalSource, Source, SourceMetadata, Versioned } from './model'
 
 describe('Main Reducer', () => {
   describe('undefined action', () => {
@@ -125,32 +126,77 @@ describe('Main Reducer', () => {
     })
   })
 
-  describe('ADD_DATASET action', () => {
-    it('adds a new dataset & initializes version', () => {
-      const action = fromActions.addDataset(sampleDataset)
+  describe('ADD_SOURCE action', () => {
+    it('adds a new source & initializes version', () => {
+      const action = fromActions.addSource(sampleSource)
       const state = reducer(initialState, action)
 
-      expect(state.datasets[sampleDataset.id]).toEqual({
-        ...sampleDataset,
+      expect(state.sources[sampleSource.id]).toEqual({
+        ...sampleSource,
         _version: 0,
       })
     })
   })
 
-  describe('REMOVE_DATASET action', () => {
-    it('removes a dataset', () => {
-      const action = fromActions.removeDataset(sampleDataset.id)
+  describe('UPDATE_SOURCE action', () => {
+    it('updates a source', () => {
+      const payload = {
+        ...sampleSource,
+        features: [
+          {
+            type: 'Feature',
+            properties: {
+              aa: 'bb',
+            },
+          },
+        ],
+      } as LocalSource
+      const action = fromActions.updateSource(payload)
       const state = reducer(
         {
           ...initialState,
-          datasets: {
-            [sampleDataset.id]: { ...sampleDataset, _version: 8 },
+          sources: {
+            [sampleSource.id]: { ...sampleSource, _version: 5 } as Source &
+              Versioned,
           },
         },
         action
       )
 
-      expect(state.datasets[sampleDataset.id]).not.toBeDefined()
+      expect(state.sources[sampleSource.id]).toBeDefined()
+      expect(state.sources[sampleSource.id]._version).toBe(6)
+      expect(state.sources[sampleSource.id].features).toEqual(payload.features)
+    })
+  })
+
+  describe('REMOVE_SOURCE action', () => {
+    it('removes a source', () => {
+      const action = fromActions.removeSource(sampleSource.id)
+      const state = reducer(
+        {
+          ...initialState,
+          sources: {
+            [sampleSource.id]: { ...sampleSource, _version: 8 } as Source &
+              Versioned,
+          },
+        },
+        action
+      )
+
+      expect(state.sources[sampleSource.id]).not.toBeDefined()
+    })
+  })
+
+  describe('SET_SOURCE_METADATA', () => {
+    it('sets metadata for a source', () => {
+      const payload: SourceMetadata = {
+        sourceId: sampleSource.id,
+        extent: [0, 0, 100, 200],
+      }
+      const action = fromActions.setSourceMetadata(payload)
+      const state = reducer(initialState, action)
+
+      expect(state.sourcesMetadata[sampleSource.id]).toEqual(payload)
     })
   })
 

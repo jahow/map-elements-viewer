@@ -1,23 +1,23 @@
 import {
   Actions,
-  ADD_DATASET,
   ADD_LAYER,
+  ADD_SOURCE,
   ADD_STYLE,
-  REMOVE_DATASET,
   REMOVE_LAYER,
+  REMOVE_SOURCE,
   REMOVE_STYLE,
   SET_LAYER_POSITION,
+  SET_SOURCE_METADATA,
   SET_VIEW_CENTER,
   SET_VIEW_ZOOM,
-  UPDATE_DATASET,
   UPDATE_LAYER,
+  UPDATE_SOURCE,
   UPDATE_STYLE,
 } from './actions'
 import {
-  Dataset,
   Layer,
-  LayersCapabilities,
-  LayersDataSchema,
+  Source,
+  SourceMetadata,
   Style,
   Versioned,
   ViewCenter,
@@ -27,23 +27,21 @@ import {
 export interface State {
   layers: { [id: string]: Layer & Versioned }
   layerOrder: string[]
-  datasets: { [id: string]: Dataset & Versioned }
+  sources: { [id: string]: Source & Versioned }
+  sourcesMetadata: { [id: string]: SourceMetadata }
   styles: { [id: string]: Style & Versioned }
   viewCenter: ViewCenter
   viewZoom: ViewZoom
-  layersCapabilities: LayersCapabilities
-  layersDataSchema: LayersDataSchema
 }
 
 export const initialState: State = {
   layers: {},
   layerOrder: [],
-  datasets: {},
+  sources: {},
+  sourcesMetadata: {},
   styles: {},
   viewCenter: [0, 0],
   viewZoom: 0,
-  layersCapabilities: {},
-  layersDataSchema: {},
 }
 
 export function main(state = initialState, action: Actions): State {
@@ -108,40 +106,50 @@ export function main(state = initialState, action: Actions): State {
         viewZoom: action.payload,
       }
     }
-    case ADD_DATASET: {
-      const datasetId = action.payload.id
+    case ADD_SOURCE: {
+      const sourceId = action.payload.id
       return {
         ...state,
-        datasets: {
-          ...state.datasets,
-          [datasetId]: {
+        sources: {
+          ...state.sources,
+          [sourceId]: {
             ...action.payload,
             _version: 0,
           },
         },
       }
     }
-    case UPDATE_DATASET: {
-      const datasetId = action.payload.id
-      const _version = state.datasets[datasetId]._version + 1
+    case UPDATE_SOURCE: {
+      const sourceId = action.payload.id
+      const _version = state.sources[sourceId]._version + 1
       return {
         ...state,
-        datasets: {
-          ...state.datasets,
-          [datasetId]: {
-            ...state.datasets[datasetId],
+        sources: {
+          ...state.sources,
+          [sourceId]: {
+            ...state.sources[sourceId],
             ...action.payload,
             _version,
           },
         },
       }
     }
-    case REMOVE_DATASET: {
-      const datasetId = action.id
-      const { [datasetId]: removed, ...datasets } = state.datasets
+    case REMOVE_SOURCE: {
+      const sourceId = action.id
+      const { [sourceId]: removed, ...sources } = state.sources
       return {
         ...state,
-        datasets: datasets as { [id: string]: Dataset & Versioned },
+        sources: sources as { [id: string]: Source & Versioned },
+      }
+    }
+    case SET_SOURCE_METADATA: {
+      const sourceId = action.payload.sourceId
+      return {
+        ...state,
+        sourcesMetadata: {
+          ...state.sourcesMetadata,
+          [sourceId]: action.payload,
+        },
       }
     }
     case ADD_STYLE: {
