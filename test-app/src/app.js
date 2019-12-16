@@ -22,5 +22,24 @@ const histogram = document.createElement('mapfold-histogram')
 histogram.init(engine)
 document.body.querySelector('.histogram-root').appendChild(histogram)
 
-engine.setViewCenter([-124850, 6077030])
-engine.setViewZoom(6)
+engine.setViewCenter([-20, 15])
+engine.setViewZoom(3)
+
+engine.addSource({
+  id: 'ifremer',
+  type: 'elastic',
+  url: 'http://localhost:9200/gn-features/_search',
+  mustParams: [
+    {
+      query_string: {
+        query:
+          'featureTypeId:"http%3A%2F%2Fsextant-test.ifremer.fr%2Fcgi-bin%2Fsextant%2Fwfs%2Fmtreguer_co%23argo_shape"',
+      },
+    },
+  ],
+})
+engine.addLayer({
+  id: 'ifremer',
+  title: 'Source Elastic',
+  sourceId: 'ifremer',
+})

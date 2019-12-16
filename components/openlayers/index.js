@@ -10,6 +10,10 @@ import VectorLayer from 'ol/layer/Vector'
 import GeoJSON from 'ol/format/GeoJSON'
 import XYZ from 'ol/source/XYZ'
 import { defaults as defaultControls } from 'ol/control'
+import WebGLPointsLayer from 'ol/layer/WebGLPoints'
+import Point from 'ol/geom/Point'
+import Feature from 'ol/Feature'
+import { fromLonLat } from 'ol/proj'
 
 class OlMap extends MapFoldComponent {
   connectedCallback() {
@@ -94,6 +98,26 @@ class OlMap extends MapFoldComponent {
           )
           break
         }
+        case 'elastic': {
+          // FIXME: assume points and use a webgl points renderer
+          map.addLayer(
+            new WebGLPointsLayer({
+              source: vectorSources[sourceId],
+              id: layer.id,
+              opacity: layer.opacity,
+              visible: layer.visible,
+              zIndex: layer._position,
+              style: {
+                symbol: {
+                  symbolType: 'circle',
+                  color: 'orange',
+                  size: 8,
+                },
+              },
+            })
+          )
+          break
+        }
       }
     })
 
@@ -137,28 +161,72 @@ class OlMap extends MapFoldComponent {
     })
 
     this.engine.viewCenter$.subscribe(center => {
-      map.getView().setCenter(center)
+      map.getView().setCenter(fromLonLat(center))
     })
 
-    merge(this.engine.sourceAdded$, this.engine.sourceUpdated$)
-      .pipe(filter(source => source.type === 'local'))
-      .subscribe(source => {
-        const features = geojson.readFeatures(source.features, {
-          dataProjection: 'EPSG:4326',
-          featureProjection: map
-            .getView()
-            .getProjection()
-            .getCode(),
-        })
-        if (!vectorSources[source.id]) {
-          vectorSources[source.id] = new VectorSource({
-            features,
-          })
-        } else {
-          vectorSources[source.id].clear()
-          vectorSources[source.id].addFeatures(features)
+    merge(this.engine.sourceAdded$, this.engine.sourceUpdated$).subscribe(
+      source => {
+        switch (source.type) {
+          case 'local':
+            const features = geojson.readFeatures(source.features, {
+              dataProjection: 'EPSG:4326',
+              featureProjection: map
+                .getView()
+                .getProjection()
+                .getCode(),
+            })
+            if (!vectorSources[source.id]) {
+              vectorSources[source.id] = new VectorSource({
+                features,
+              })
+            } else {
+              vectorSources[source.id].clear()
+              vectorSources[source.id].addFeatures(features)
+            }
+            break
+          case 'elastic':
+            if (!vectorSources[source.id]) {
+              vectorSources[source.id] = new VectorSource({
+                features: [],
+              })
+            }
+            fetch(source.url, {
+              method: 'POST',
+              headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                query: {
+                  bool: {
+                    must: [...source.mustParams],
+                  },
+                },
+                from: 0,
+                size: 10000,
+              }),
+            })
+              .then(response => response.json())
+              .then(json => {
+                console.log(json)
+                const features = json.hits.hits.map(
+                  hit =>
+                    new Feature({
+                      geometry: geojson.readGeometry(hit._source.geom, {
+                        dataProjection: 'EPSG:4326',
+                        featureProjection: map
+                          .getView()
+                          .getProjection()
+                          .getCode(),
+                      }),
+                    })
+                )
+                vectorSources[source.id].addFeatures(features)
+              })
+            break
         }
-      })
+      }
+    )
 
     this.engine.sourceRemoved$.subscribe(id => {
       vectorSources[id].clear()
