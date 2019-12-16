@@ -12,14 +12,15 @@ import { defaults as defaultControls } from 'ol/control'
 import WebGLPointsLayer from 'ol/layer/WebGLPoints'
 import Feature from 'ol/Feature'
 import { fromLonLat, transformExtent } from 'ol/proj'
-import { throttleTime } from 'rxjs/operators'
+import { map, throttleTime } from 'rxjs/operators'
+import { getIntersection } from 'ol/extent'
 
 class OlMap extends MapFoldComponent {
   connectedCallback() {
     this.style.background = 'lightgray'
 
     const view = new View()
-    const map = new Map({
+    const olMap = new Map({
       view,
       target: this,
       controls: defaultControls({
@@ -28,26 +29,28 @@ class OlMap extends MapFoldComponent {
       }),
     })
 
-    const extentObs = new Subject()
+    const extentChanged$ = new Subject()
     view.on(['change:center', 'change:resolution'], () => {
       if (view.getResolution() && view.getCenter()) {
-        extentObs.next()
+        extentChanged$.next()
       }
     })
-    extentObs
-      .pipe(throttleTime(200))
-      .subscribe(extent =>
-        this.engine.setViewExtent(
-          transformExtent(
-            view.calculateExtent(),
-            view.getProjection(),
-            'EPSG:4326'
-          )
+    const extent$ = extentChanged$.pipe(
+      throttleTime(200, undefined, {
+        trailing: true,
+      }),
+      map(() =>
+        transformExtent(
+          view.calculateExtent(),
+          view.getProjection(),
+          'EPSG:4326'
         )
       )
+    )
+    extent$.subscribe(extent => this.engine.setViewExtent(extent))
 
     // add positron basemap
-    map.addLayer(
+    olMap.addLayer(
       new TileLayer({
         source: new XYZ({
           urls: [
@@ -65,7 +68,7 @@ class OlMap extends MapFoldComponent {
     const geojson = new GeoJSON()
 
     const getLayerById = id => {
-      const layers = map.getLayers().getArray()
+      const layers = olMap.getLayers().getArray()
       for (let i = 0; i < layers.length; i++) {
         if (layers[i].get('id') === id) return layers[i]
       }
@@ -88,7 +91,7 @@ class OlMap extends MapFoldComponent {
 
       switch (sourceType) {
         case 'wms': {
-          map.addLayer(
+          olMap.addLayer(
             new ImageLayer({
               source: new ImageWMS({
                 url: source.url,
@@ -105,7 +108,7 @@ class OlMap extends MapFoldComponent {
           break
         }
         case 'local': {
-          map.addLayer(
+          olMap.addLayer(
             new VectorLayer({
               source: vectorSources[sourceId],
               id: layer.id,
@@ -118,7 +121,7 @@ class OlMap extends MapFoldComponent {
         }
         case 'elastic': {
           // FIXME: assume points and use a webgl points renderer
-          map.addLayer(
+          olMap.addLayer(
             new WebGLPointsLayer({
               source: vectorSources[sourceId],
               id: layer.id,
@@ -163,7 +166,7 @@ class OlMap extends MapFoldComponent {
     this.engine.layerRemoved$.subscribe(({ id }) => {
       const layer = getLayerById(id)
       if (layer) {
-        map.removeLayer(layer)
+        olMap.removeLayer(layer)
       }
     })
 
@@ -175,15 +178,17 @@ class OlMap extends MapFoldComponent {
     })
 
     this.engine.viewZoom$.subscribe(zoom => {
-      map.getView().setZoom(zoom)
+      view.setZoom(zoom)
     })
 
     this.engine.viewCenter$.subscribe(center => {
-      map.getView().setCenter(fromLonLat(center))
+      view.setCenter(fromLonLat(center))
     })
 
     merge(this.engine.sourceAdded$, this.engine.sourceUpdated$).subscribe(
       source => {
+        let olSource
+
         switch (source.type) {
           case 'local':
             const features = geojson.readFeatures(source.features, {
@@ -193,54 +198,86 @@ class OlMap extends MapFoldComponent {
                 .getProjection()
                 .getCode(),
             })
-            if (!vectorSources[source.id]) {
-              vectorSources[source.id] = new VectorSource({
+            olSource = vectorSources[source.id]
+            if (!olSource) {
+              olSource = vectorSources[source.id] = new VectorSource({
                 features,
               })
             } else {
-              vectorSources[source.id].clear()
-              vectorSources[source.id].addFeatures(features)
+              olSource.clear()
+              olSource.addFeatures(features)
             }
             break
+
           case 'elastic':
-            if (!vectorSources[source.id]) {
-              vectorSources[source.id] = new VectorSource({
+            olSource = vectorSources[source.id]
+            if (!olSource) {
+              olSource = vectorSources[source.id] = new VectorSource({
                 features: [],
               })
-            }
-            fetch(source.url, {
-              method: 'POST',
-              headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                query: {
-                  bool: {
-                    must: [...source.mustParams],
+              const loadExtent = extent => {
+                if (view.getAnimating() || view.getInteracting()) {
+                  return
+                }
+                const safeExtent = getIntersection(extent, [-180, -90, 180, 90])
+                fetch(source.url, {
+                  method: 'POST',
+                  headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
                   },
-                },
-                from: 0,
-                size: 10000,
-              }),
-            })
-              .then(response => response.json())
-              .then(json => {
-                console.log(json)
-                const features = json.hits.hits.map(
-                  hit =>
-                    new Feature({
-                      geometry: geojson.readGeometry(hit._source.geom, {
-                        dataProjection: 'EPSG:4326',
-                        featureProjection: map
-                          .getView()
-                          .getProjection()
-                          .getCode(),
-                      }),
-                    })
+                  body: JSON.stringify({
+                    _source: 'geom',
+                    query: {
+                      bool: {
+                        must: [
+                          ...source.mustParams,
+                          {
+                            geo_bounding_box: {
+                              location: {
+                                top_left: [safeExtent[0], safeExtent[3]],
+                                bottom_right: [safeExtent[2], safeExtent[1]],
+                              },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                    from: 0,
+                    size: 10000,
+                    track_total_hits: true,
+                  }),
+                })
+                  .then(response => response.json())
+                  .then(json => {
+                    const features = json.hits.hits.map(
+                      hit =>
+                        new Feature({
+                          geometry: geojson.readGeometry(hit._source.geom, {
+                            dataProjection: 'EPSG:4326',
+                            featureProjection: view.getProjection(),
+                          }),
+                        })
+                    )
+                    olSource.clear()
+                    olSource.addFeatures(features)
+                    olSource.removeLoadedExtent([
+                      -Infinity,
+                      -Infinity,
+                      Infinity,
+                      Infinity,
+                    ])
+                  })
+              }
+              loadExtent(
+                transformExtent(
+                  view.calculateExtent(),
+                  view.getProjection(),
+                  'EPSG:4326'
                 )
-                vectorSources[source.id].addFeatures(features)
-              })
+              )
+              extent$.subscribe(loadExtent)
+            }
             break
         }
       }
