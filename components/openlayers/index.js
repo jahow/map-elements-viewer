@@ -127,8 +127,8 @@ class OlMap extends MapFoldComponent {
         layer.setVisible(layerInfo.visible)
         layer.setOpacity(layerInfo.opacity)
 
-        const sourceType = layer.source.type
-        const sourceId = layer.source.id
+        const sourceType = layerInfo.source.type
+        const sourceId = layerInfo.source.id
 
         if (sourceType === 'local' && !vectorSources[sourceId]) {
           vectorSources[sourceId] = new VectorSource({
