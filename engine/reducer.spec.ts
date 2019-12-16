@@ -43,6 +43,19 @@ describe('Main Reducer', () => {
     })
   })
 
+  describe('SET_VIEW_EXTENT action', () => {
+    it('does not have an extent initially', () => {
+      expect(initialState.viewExtent).toBeNull()
+    })
+
+    it('modifies the view extent', () => {
+      const action = fromActions.setViewExtent([0, 10, 100, 200])
+      const state = reducer(initialState, action)
+
+      expect(state.viewZoom).toEqual([0, 10, 100, 200])
+    })
+  })
+
   describe('ADD_LAYER action', () => {
     it('adds a new layer & initializes version', () => {
       const action = fromActions.addLayer(sampleLayer1)

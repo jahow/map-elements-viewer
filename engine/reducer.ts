@@ -9,6 +9,7 @@ import {
   SET_LAYER_POSITION,
   SET_SOURCE_METADATA,
   SET_VIEW_CENTER,
+  SET_VIEW_EXTENT,
   SET_VIEW_ZOOM,
   UPDATE_LAYER,
   UPDATE_SOURCE,
@@ -21,6 +22,7 @@ import {
   Style,
   Versioned,
   ViewCenter,
+  ViewExtent,
   ViewZoom,
 } from './model'
 
@@ -38,6 +40,7 @@ export interface State {
   styles: StateStyles
   viewCenter: ViewCenter
   viewZoom: ViewZoom
+  viewExtent: ViewExtent | null
 }
 
 export const initialState: State = {
@@ -48,6 +51,7 @@ export const initialState: State = {
   styles: {},
   viewCenter: [0, 0],
   viewZoom: 0,
+  viewExtent: null,
 }
 
 export function main(state = initialState, action: Actions): State {
@@ -110,6 +114,12 @@ export function main(state = initialState, action: Actions): State {
       return {
         ...state,
         viewZoom: action.payload,
+      }
+    }
+    case SET_VIEW_EXTENT: {
+      return {
+        ...state,
+        viewExtent: action.payload,
       }
     }
     case ADD_SOURCE: {

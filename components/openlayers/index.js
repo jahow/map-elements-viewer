@@ -4,29 +4,47 @@ import ImageLayer from 'ol/layer/Image'
 import TileLayer from 'ol/layer/Tile'
 import ImageWMS from 'ol/source/ImageWMS'
 import VectorSource from 'ol/source/Vector'
-import { merge } from 'rxjs'
-import { filter } from 'rxjs/operators'
+import { merge, Subject } from 'rxjs'
 import VectorLayer from 'ol/layer/Vector'
 import GeoJSON from 'ol/format/GeoJSON'
 import XYZ from 'ol/source/XYZ'
 import { defaults as defaultControls } from 'ol/control'
 import WebGLPointsLayer from 'ol/layer/WebGLPoints'
-import Point from 'ol/geom/Point'
 import Feature from 'ol/Feature'
-import { fromLonLat } from 'ol/proj'
+import { fromLonLat, transformExtent } from 'ol/proj'
+import { throttleTime } from 'rxjs/operators'
 
 class OlMap extends MapFoldComponent {
   connectedCallback() {
     this.style.background = 'lightgray'
 
+    const view = new View()
     const map = new Map({
-      view: new View(),
+      view,
       target: this,
       controls: defaultControls({
         zoom: false,
         rotate: false,
       }),
     })
+
+    const extentObs = new Subject()
+    view.on(['change:center', 'change:resolution'], () => {
+      if (view.getResolution() && view.getCenter()) {
+        extentObs.next()
+      }
+    })
+    extentObs
+      .pipe(throttleTime(200))
+      .subscribe(extent =>
+        this.engine.setViewExtent(
+          transformExtent(
+            view.calculateExtent(),
+            view.getProjection(),
+            'EPSG:4326'
+          )
+        )
+      )
 
     // add positron basemap
     map.addLayer(

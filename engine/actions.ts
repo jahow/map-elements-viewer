@@ -4,6 +4,7 @@ import {
   SourceMetadata,
   Style,
   ViewCenter,
+  ViewExtent,
   ViewZoom,
 } from './model'
 
@@ -71,6 +72,15 @@ export interface SetViewZoomAction {
 }
 export function setViewZoom(payload: ViewZoom): SetViewZoomAction {
   return { type: SET_VIEW_ZOOM, payload }
+}
+
+export const SET_VIEW_EXTENT = 'Set View Extent'
+export interface SetViewExtentAction {
+  type: 'Set View Extent'
+  payload: ViewExtent
+}
+export function setViewExtent(payload: ViewExtent): SetViewExtentAction {
+  return { type: SET_VIEW_EXTENT, payload }
 }
 
 export const ADD_SOURCE = 'Add Source'
@@ -148,6 +158,7 @@ export type Actions =
   | SetLayerPositionAction
   | SetViewCenterAction
   | SetViewZoomAction
+  | SetViewExtentAction
   | AddSourceAction
   | UpdateSourceAction
   | RemoveSourceAction

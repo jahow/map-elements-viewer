@@ -2,6 +2,7 @@ import { Feature } from 'geojson'
 
 export type ViewCenter = [number, number]
 export type ViewZoom = number
+export type ViewExtent = [number, number, number, number]
 
 export interface Versioned {
   _version: number

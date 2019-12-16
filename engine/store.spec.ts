@@ -9,6 +9,7 @@ import {
   selectUpdatedLayer,
   selectUpdatedObject,
   selectViewCenter,
+  selectViewExtent,
   selectViewZoom,
 } from './store'
 import { BehaviorSubject, Subject } from 'rxjs'
@@ -92,6 +93,35 @@ describe('Store', () => {
 
         expect(calledCount).toBe(2)
         expect(emitted).toEqual(3)
+      })
+    })
+
+    describe('selectViewExtent', () => {
+      it('emits a value when the view extent is defined or changes', () => {
+        let calledCount = 0
+        let emitted = null
+        selectViewExtent(state$).subscribe(extent => {
+          calledCount++
+          emitted = extent
+        })
+
+        expect(calledCount).toBe(0)
+
+        subject.next({
+          ...initialState,
+          viewExtent: [10, 20, 30, 40],
+        })
+
+        expect(calledCount).toBe(1)
+        expect(emitted).toEqual([10, 20, 30, 40])
+
+        subject.next({
+          ...initialState,
+          viewExtent: [100, 200, 300, 400],
+        })
+
+        expect(calledCount).toBe(2)
+        expect(emitted).toEqual([100, 200, 300, 400])
       })
     })
 

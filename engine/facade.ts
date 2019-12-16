@@ -7,10 +7,11 @@ import {
   removeStyle,
   setLayerPosition,
   setViewCenter,
+  setViewExtent,
   setViewZoom,
   updateLayer,
 } from './actions'
-import { Layer, Source, Style } from './model'
+import { Layer, Source, Style, ViewCenter, ViewExtent, ViewZoom } from './model'
 import {
   getStore,
   getStoreObservable,
@@ -29,6 +30,7 @@ import {
   selectUpdatedSources,
   selectUpdatedStyles,
   selectViewCenter,
+  selectViewExtent,
   selectViewZoom,
 } from './store'
 import { distinctUntilChanged, filter } from 'rxjs/operators'
@@ -39,6 +41,7 @@ export class Facade {
 
   viewZoom$ = selectViewZoom(this.state$)
   viewCenter$ = selectViewCenter(this.state$)
+  viewExtent$ = selectViewExtent(this.state$)
   layerAdded$ = selectAddedLayer(this.state$)
   layerRemoved$ = selectRemovedLayer(this.state$)
   layerUpdated$ = selectUpdatedLayer(this.state$)
@@ -85,12 +88,16 @@ export class Facade {
     this.store.dispatch(setLayerPosition({ id, position }))
   }
 
-  setViewZoom(zoom: number) {
+  setViewZoom(zoom: ViewZoom) {
     this.store.dispatch(setViewZoom(zoom))
   }
 
-  setViewCenter(center: [number, number]) {
+  setViewCenter(center: ViewCenter) {
     this.store.dispatch(setViewCenter(center))
+  }
+
+  setViewExtent(extent: ViewExtent) {
+    this.store.dispatch(setViewExtent(extent))
   }
 
   addSource(source: Source) {

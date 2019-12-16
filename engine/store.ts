@@ -9,6 +9,7 @@ import { applyMiddleware, compose, createStore, Store } from 'redux'
 import { createEpicMiddleware } from 'redux-observable'
 import {
   distinctUntilChanged,
+  filter,
   map,
   mergeMap,
   pairwise,
@@ -17,7 +18,7 @@ import {
 } from 'rxjs/operators'
 import { fromArray } from 'rxjs/internal/observable/fromArray'
 import { Observable } from 'rxjs'
-import { Layer, Versioned } from './model'
+import { Layer, Versioned, ViewExtent } from './model'
 import { Actions } from './actions'
 
 const epicMiddleware = createEpicMiddleware()
@@ -53,6 +54,13 @@ export const selectViewZoom = (state$: Observable<State>) =>
   state$.pipe(
     map(state => state.viewZoom),
     distinctUntilChanged()
+  )
+
+export const selectViewExtent = (state$: Observable<State>) =>
+  state$.pipe(
+    map(state => state.viewExtent),
+    distinctUntilChanged(),
+    filter(extent => extent !== null)
   )
 
 export function selectAddedObject<T>(
